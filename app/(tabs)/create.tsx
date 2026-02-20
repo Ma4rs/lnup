@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -53,6 +54,11 @@ export default function CreateEventScreen() {
   };
 
   const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Berechtigung benötigt", "Bitte erlaube den Zugriff auf deine Fotos in den Einstellungen.");
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -65,6 +71,7 @@ export default function CreateEventScreen() {
   };
 
   const handleSubmit = () => {
+    Keyboard.dismiss();
     if (!title || !description || !venueName || !eventDate || !timeStart || !category) {
       Alert.alert("Fehlende Angaben", "Bitte fülle alle Pflichtfelder aus.");
       return;

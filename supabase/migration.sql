@@ -25,7 +25,7 @@ BEGIN
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || LEFT(NEW.id::text, 8)),
     COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'username', 'Neuer User'),
-    COALESCE(NEW.email_confirmed_at IS NOT NULL, false)
+    (NEW.email_confirmed_at IS NOT NULL)
   );
   RETURN NEW;
 END;
@@ -55,6 +55,9 @@ CREATE TABLE public.venues (
 
 CREATE INDEX idx_venues_location ON public.venues(lat, lng);
 CREATE INDEX idx_venues_owner ON public.venues(owner_id);
+
+CREATE INDEX idx_profiles_username ON public.profiles(username);
+CREATE INDEX idx_profiles_trust_score ON public.profiles(trust_score DESC);
 
 -- ============================================================
 -- EVENT SERIES (recurring events)
@@ -143,6 +146,8 @@ CREATE TABLE public.event_confirmations (
 );
 
 CREATE INDEX idx_confirmations_event ON public.event_confirmations(event_id);
+CREATE INDEX idx_confirmations_user ON public.event_confirmations(user_id);
+CREATE INDEX idx_confirmations_status ON public.event_confirmations(status);
 
 -- ============================================================
 -- EVENT REPORTS
@@ -314,6 +319,7 @@ CREATE POLICY "Owners can update venues" ON public.venues FOR UPDATE USING (auth
 CREATE POLICY "Active events are public" ON public.events FOR SELECT USING (status IN ('active', 'past'));
 CREATE POLICY "Authenticated users can create events" ON public.events FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Creators can update own events" ON public.events FOR UPDATE USING (auth.uid() = created_by);
+CREATE POLICY "Creators can delete own events" ON public.events FOR DELETE USING (auth.uid() = created_by);
 
 -- Event series: public read, creator write
 CREATE POLICY "Event series are public" ON public.event_series FOR SELECT USING (true);
@@ -332,6 +338,7 @@ CREATE POLICY "Users can unsave events" ON public.event_saves FOR DELETE USING (
 -- Confirmations: public read (counts), own write
 CREATE POLICY "Confirmations are public" ON public.event_confirmations FOR SELECT USING (true);
 CREATE POLICY "Users can confirm attendance" ON public.event_confirmations FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own confirmations" ON public.event_confirmations FOR UPDATE USING (auth.uid() = user_id);
 
 -- Reports: own only
 CREATE POLICY "Users see own reports" ON public.event_reports FOR SELECT USING (auth.uid() = reported_by);

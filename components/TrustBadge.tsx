@@ -14,8 +14,10 @@ interface TrustBadgeProps {
   sourceType: EventSourceType;
 }
 
+const DEFAULT_BADGE = { label: "○ Unbekannt", color: "#6B6B80", bgColor: "rgba(107,107,128,0.15)" };
+
 export function TrustBadge({ sourceType }: TrustBadgeProps) {
-  const config = BADGE_CONFIG[sourceType];
+  const config = BADGE_CONFIG[sourceType] ?? DEFAULT_BADGE;
 
   return (
     <View

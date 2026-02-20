@@ -3,30 +3,41 @@ import { de } from "date-fns/locale";
 import type { DateFilter, EventSourceType } from "@/types";
 
 export function formatEventDate(dateStr: string): string {
-  const date = parseISO(dateStr);
-  if (isToday(date)) return "Heute";
-  if (isTomorrow(date)) return "Morgen";
-  return format(date, "EEE, d. MMM", { locale: de });
+  try {
+    const date = parseISO(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    if (isToday(date)) return "Heute";
+    if (isTomorrow(date)) return "Morgen";
+    return format(date, "EEE, d. MMM", { locale: de });
+  } catch {
+    return dateStr;
+  }
 }
 
 export function formatTime(timeStr: string): string {
+  if (!timeStr || timeStr.length < 5) return timeStr ?? "";
   return timeStr.substring(0, 5);
 }
 
 export function matchesDateFilter(dateStr: string, filter: DateFilter): boolean {
   if (filter === "alle") return true;
-  const date = parseISO(dateStr);
-  switch (filter) {
-    case "heute":
-      return isToday(date);
-    case "morgen":
-      return isTomorrow(date);
-    case "wochenende":
-      return isWeekend(date) && isThisWeek(date);
-    case "woche":
-      return isThisWeek(date);
-    default:
-      return true;
+  try {
+    const date = parseISO(dateStr);
+    if (isNaN(date.getTime())) return true;
+    switch (filter) {
+      case "heute":
+        return isToday(date);
+      case "morgen":
+        return isTomorrow(date);
+      case "wochenende":
+        return isWeekend(date) && isThisWeek(date);
+      case "woche":
+        return isThisWeek(date);
+      default:
+        return true;
+    }
+  } catch {
+    return true;
   }
 }
 
@@ -39,10 +50,10 @@ export function getSourceLabel(source: EventSourceType): string {
     verified_user: "Verifiziert",
     community: "Community",
   };
-  return labels[source];
+  return labels[source] ?? source;
 }
 
 export function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) return str;
+  if (!str || str.length <= maxLength) return str ?? "";
   return str.substring(0, maxLength - 3) + "...";
 }

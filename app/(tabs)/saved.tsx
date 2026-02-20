@@ -6,6 +6,8 @@ import { useEventStore } from "@/stores/eventStore";
 export default function SavedScreen() {
   const insets = useSafeAreaInsets();
   const getSavedEvents = useEventStore((s) => s.getSavedEvents);
+  const toggleGoing = useEventStore((s) => s.toggleGoing);
+  const goingIds = useEventStore((s) => s.goingEventIds);
   const savedEvents = getSavedEvents();
 
   return (
@@ -20,7 +22,13 @@ export default function SavedScreen() {
       <FlatList
         data={savedEvents}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item} />}
+        renderItem={({ item }) => (
+          <EventCard
+            event={item}
+            onToggleGoing={toggleGoing}
+            isGoing={goingIds.has(item.id)}
+          />
+        )}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={

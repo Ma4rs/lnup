@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -25,6 +26,7 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleRegister = async () => {
+    Keyboard.dismiss();
     if (!username || !email || !password) {
       Alert.alert("Fehler", "Bitte alle Felder ausfüllen.");
       return;

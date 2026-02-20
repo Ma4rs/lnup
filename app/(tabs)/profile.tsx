@@ -28,7 +28,10 @@ export default function ProfileScreen() {
         <Text className="text-sm text-text-secondary text-center mb-6">
           Melde dich an, um Events zu erstellen und deinen Rang aufzubauen.
         </Text>
-        <TouchableOpacity className="bg-primary rounded-xl px-8 py-3">
+        <TouchableOpacity
+          onPress={() => router.push("/(auth)/login")}
+          className="bg-primary rounded-xl px-8 py-3"
+        >
           <Text className="text-white font-bold text-base">Anmelden</Text>
         </TouchableOpacity>
       </View>

@@ -96,9 +96,11 @@ export default function LeaderboardScreen() {
   const top3 = sorted.slice(0, 3);
   const rest = sorted.slice(3);
 
-  const currentUserPosition = currentUser
-    ? sorted.findIndex((p) => p.id === currentUser.id) + 1
-    : null;
+  const currentUserPosition = (() => {
+    if (!currentUser) return null;
+    const idx = sorted.findIndex((p) => p.id === currentUser.id);
+    return idx >= 0 ? idx + 1 : null;
+  })();
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>

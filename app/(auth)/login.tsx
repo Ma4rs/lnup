@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -22,6 +23,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
+    Keyboard.dismiss();
     if (!email || !password) {
       Alert.alert("Fehler", "Bitte E-Mail und Passwort eingeben.");
       return;

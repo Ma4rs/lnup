@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Share } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -62,6 +62,13 @@ export default function EventDetailScreen() {
             />
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={async () => {
+              try {
+                await Share.share({
+                  message: `${event.title} — ${formatEventDate(event.event_date)}, ${formatTime(event.time_start)} Uhr @ ${event.venue?.name ?? ""}. Entdeckt auf LNUP!`,
+                });
+              } catch {}
+            }}
             className="w-10 h-10 rounded-full items-center justify-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
@@ -235,7 +242,7 @@ export default function EventDetailScreen() {
                     isGoing ? "text-secondary" : "text-white"
                   }`}
                 >
-                  {isGoing ? `Bin dabei! (${event.going_count})` : `Bin dabei! (${event.going_count})`}
+                  {isGoing ? `Dabei! (${event.going_count})` : `Bin dabei! (${event.going_count})`}
                 </Text>
               </TouchableOpacity>
             )}

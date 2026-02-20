@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { TrustBadge } from "./TrustBadge";
 import { RankBadge } from "./RankBadge";
 import { EventCover } from "./EventCover";
@@ -151,7 +152,7 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
             {/* Bin dabei / War dabei button */}
             {!isPast && onToggleGoing && (
               <TouchableOpacity
-                onPress={() => onToggleGoing(event.id)}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggleGoing(event.id); }}
                 className={`flex-row items-center gap-1 rounded-full px-3 py-1.5 ${
                   isGoing ? "bg-secondary/20" : "bg-card-hover"
                 }`}
@@ -169,7 +170,7 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
 
             {/* Save button */}
             <TouchableOpacity
-              onPress={() => toggleSave(event.id)}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggleSave(event.id); }}
               className="flex-row items-center gap-1 rounded-full px-3 py-1.5 bg-card-hover"
             >
               <Ionicons

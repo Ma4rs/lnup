@@ -59,7 +59,7 @@ export const useEventStore = create<EventState>((set, get) => ({
             ? {
                 ...e,
                 is_saved: next.has(eventId),
-                saves_count: e.saves_count + (next.has(eventId) ? 1 : -1),
+                saves_count: Math.max(0, e.saves_count + (next.has(eventId) ? 1 : -1)),
               }
             : e
         ),
@@ -82,7 +82,7 @@ export const useEventStore = create<EventState>((set, get) => ({
             ? {
                 ...e,
                 is_going: next.has(eventId),
-                going_count: e.going_count + (next.has(eventId) ? 1 : -1),
+                going_count: Math.max(0, e.going_count + (next.has(eventId) ? 1 : -1)),
               }
             : e
         ),
