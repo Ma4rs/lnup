@@ -93,6 +93,24 @@ export function CitySelector({ visible, onClose }: CitySelectorProps) {
             </View>
           </View>
 
+          {/* All Cities Option */}
+          {!search && (
+            <TouchableOpacity
+              onPress={() => handleSelect("")}
+              className={`flex-row items-center justify-between mx-4 px-4 py-3.5 rounded-xl mb-3 ${
+                !city ? "bg-primary/15 border border-primary/30" : "bg-card border border-border"
+              }`}
+            >
+              <View className="flex-row items-center gap-3">
+                <Ionicons name="globe-outline" size={18} color={!city ? "#6C5CE7" : "#6B6B80"} />
+                <Text className={`text-base ${!city ? "text-primary font-semibold" : "text-text-primary"}`}>
+                  Alle Städte
+                </Text>
+              </View>
+              {!city && <Ionicons name="checkmark-circle" size={20} color="#6C5CE7" />}
+            </TouchableOpacity>
+          )}
+
           {/* City List */}
           <FlatList
             data={filteredCities}

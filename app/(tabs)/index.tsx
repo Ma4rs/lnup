@@ -35,20 +35,22 @@ export default function FeedScreen() {
 
   const filteredEvents = useMemo(() => {
     return activeEvents.filter((event) => {
+      if (city && event.venue?.city && event.venue.city !== city) return false;
       if (!matchesDateFilter(event.event_date, dateFilter)) return false;
       if (categoryFilter && event.category !== categoryFilter) return false;
       return true;
     });
-  }, [activeEvents, dateFilter, categoryFilter]);
+  }, [activeEvents, dateFilter, categoryFilter, city]);
 
   const eventCounts = useMemo(() => {
     const counts: Partial<Record<EventCategory, number>> = {};
     for (const event of activeEvents) {
+      if (city && event.venue?.city && event.venue.city !== city) continue;
       if (!matchesDateFilter(event.event_date, dateFilter)) continue;
       counts[event.category] = (counts[event.category] ?? 0) + 1;
     }
     return counts;
-  }, [activeEvents, dateFilter]);
+  }, [activeEvents, dateFilter, city]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -83,7 +85,7 @@ export default function FeedScreen() {
               className="flex-row items-center gap-1 bg-card rounded-full px-3 py-1.5 border border-border"
             >
               <Ionicons name="location" size={12} color="#6C5CE7" />
-              <Text className="text-xs text-text-secondary">{city}</Text>
+              <Text className="text-xs text-text-secondary">{city || "Alle Städte"}</Text>
               <Ionicons name="chevron-down" size={12} color="#6B6B80" />
             </TouchableOpacity>
           </View>

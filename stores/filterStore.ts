@@ -17,7 +17,7 @@ export const useFilterStore = create<FilterState>((set) => ({
   dateFilter: "alle",
   categoryFilter: null,
   searchQuery: "",
-  city: "Deggendorf",
+  city: "",
 
   setDateFilter: (dateFilter) => set({ dateFilter }),
   setCategoryFilter: (categoryFilter) => set({ categoryFilter }),

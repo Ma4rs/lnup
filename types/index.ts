@@ -56,6 +56,7 @@ export interface Venue {
   id: string;
   name: string;
   address: string;
+  city: string;
   lat: number;
   lng: number;
   google_place_id: string | null;
