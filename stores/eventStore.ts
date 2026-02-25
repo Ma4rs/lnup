@@ -94,14 +94,17 @@ async function persistExternalEvents(events: Event[]): Promise<void> {
   }
 }
 
+const TM_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
 interface EventState {
   events: Event[];
   photos: EventPhoto[];
   savedEventIds: Set<string>;
   goingEventIds: Set<string>;
   reminderIds: Map<string, string>;
+  lastFetchTimestamp: number;
   isLoading: boolean;
-  fetchEvents: (city?: string) => Promise<void>;
+  fetchEvents: (city?: string, forceRefresh?: boolean) => Promise<void>;
   toggleSave: (eventId: string) => Promise<void>;
   toggleGoing: (eventId: string) => Promise<void>;
   confirmAttended: (eventId: string) => Promise<void>;
@@ -198,9 +201,10 @@ export const useEventStore = create<EventState>((set, get) => ({
   savedEventIds: new Set<string>(),
   goingEventIds: new Set<string>(),
   reminderIds: new Map<string, string>(),
+  lastFetchTimestamp: 0,
   isLoading: false,
 
-  fetchEvents: async (city?: string) => {
+  fetchEvents: async (city?: string, forceRefresh?: boolean) => {
     set({ isLoading: true });
 
     try {
@@ -242,7 +246,11 @@ export const useEventStore = create<EventState>((set, get) => ({
 
       set({ events, savedEventIds: savedIds, goingEventIds: goingIds });
 
-      if (TICKETMASTER_API_KEY) {
+      const now = Date.now();
+      const cacheExpired = now - get().lastFetchTimestamp > TM_CACHE_DURATION;
+      const shouldFetchTM = TICKETMASTER_API_KEY && (forceRefresh || cacheExpired || events.length === 0);
+
+      if (shouldFetchTM) {
         try {
           const externalEvents = await fetchExternalEvents(city || "");
           if (externalEvents.length > 0) {
@@ -251,6 +259,7 @@ export const useEventStore = create<EventState>((set, get) => ({
               console.warn("Persist failed:", err)
             );
           }
+          set({ lastFetchTimestamp: now });
         } catch (error) {
           console.warn("External event fetch failed:", error);
         }

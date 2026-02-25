@@ -7,7 +7,7 @@ import { EventCard } from "@/components/EventCard";
 import { SkeletonCard } from "@/components/SkeletonCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { DateFilter } from "@/components/DateFilter";
-import { CitySelector } from "@/components/CitySelector";
+import { CityDropdown } from "@/components/CityDropdown";
 import { SearchOverlay } from "@/components/SearchOverlay";
 import { SortDropdown } from "@/components/SortDropdown";
 import { TrendingEvents } from "@/components/TrendingEvents";
@@ -29,7 +29,7 @@ export default function FeedScreen() {
     useFilterStore();
   const [refreshing, setRefreshing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
-  const [cityModalVisible, setCityModalVisible] = useState(false);
+  const [cityDropdownVisible, setCityDropdownVisible] = useState(false);
 
   useEffect(() => {
     if (!hasFetched) {
@@ -83,7 +83,7 @@ export default function FeedScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchEvents(city || undefined);
+    await fetchEvents(city || undefined, true);
     setRefreshing(false);
   }, [fetchEvents, city]);
 
@@ -116,12 +116,12 @@ export default function FeedScreen() {
               <Ionicons name="trophy" size={16} color="#FFC107" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => setCityModalVisible(true)}
+              onPress={() => setCityDropdownVisible(!cityDropdownVisible)}
               className="flex-row items-center gap-1 bg-card rounded-full px-3 py-1.5 border border-border"
             >
               <Ionicons name="location" size={12} color="#6C5CE7" />
               <Text className="text-xs text-text-secondary">{city || "Alle Städte"}</Text>
-              <Ionicons name="chevron-down" size={12} color="#6B6B80" />
+              <Ionicons name={cityDropdownVisible ? "chevron-up" : "chevron-down"} size={12} color="#6B6B80" />
             </TouchableOpacity>
           </View>
         </View>
@@ -179,8 +179,8 @@ export default function FeedScreen() {
         }
       />
 
-      {/* Modals */}
-      <CitySelector visible={cityModalVisible} onClose={() => setCityModalVisible(false)} />
+      {/* Dropdowns & Modals */}
+      <CityDropdown visible={cityDropdownVisible} onClose={() => setCityDropdownVisible(false)} />
       <SearchOverlay visible={searchVisible} onClose={() => setSearchVisible(false)} />
       <SortDropdown visible={sortVisible} onClose={() => setSortVisible(false)} />
     </View>
