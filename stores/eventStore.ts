@@ -13,10 +13,15 @@ function showError(msg: string) {
 
 async function persistExternalEvents(events: Event[]): Promise<void> {
   const seenCities = new Set<string>();
+  const seenKeys = new Set<string>();
 
   for (const event of events) {
     try {
       if (!event.source_url) continue;
+
+      const dedupKey = `${event.title.toLowerCase().trim()}|${event.event_date}`;
+      if (seenKeys.has(dedupKey)) continue;
+      seenKeys.add(dedupKey);
 
       const cityName = event.venue?.city;
       if (cityName && !seenCities.has(cityName)) {
@@ -29,22 +34,13 @@ async function persistExternalEvents(events: Event[]): Promise<void> {
           );
       }
 
-      const { data: byUrl } = await supabase
+      const { count } = await supabase
         .from("events")
-        .select("id")
-        .eq("source_url", event.source_url)
-        .maybeSingle();
-
-      if (byUrl) continue;
-
-      const { data: byTitle } = await supabase
-        .from("events")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("title", event.title)
-        .eq("event_date", event.event_date)
-        .maybeSingle();
+        .eq("event_date", event.event_date);
 
-      if (byTitle) continue;
+      if ((count ?? 0) > 0) continue;
 
       let venueId: string | null = null;
       if (event.venue) {
