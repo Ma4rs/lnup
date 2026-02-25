@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withSequence } from "react-native-reanimated";
@@ -159,10 +159,20 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
             </Text>
           </View>
           {event.price_info && !isFreeEvent(event.price_info) && (
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="pricetag-outline" size={14} color="#A0A0B8" />
-              <Text className="text-xs text-text-secondary">{event.price_info}</Text>
-            </View>
+            event.source_url ? (
+              <TouchableOpacity
+                onPress={(e) => { e.stopPropagation(); Linking.openURL(event.source_url!); }}
+                className="flex-row items-center gap-1"
+              >
+                <Ionicons name="pricetag-outline" size={14} color="#009CDE" />
+                <Text className="text-xs text-[#009CDE] underline">{event.price_info}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="pricetag-outline" size={14} color="#A0A0B8" />
+                <Text className="text-xs text-text-secondary">{event.price_info}</Text>
+              </View>
+            )
           )}
         </View>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Share, Alert, FlatList, useWindowDimensions } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Share, Alert, FlatList, useWindowDimensions, Linking } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -261,12 +261,25 @@ export default function EventDetailScreen() {
             </View>
 
             {event.price_info && (
-              <View className="bg-card rounded-xl border border-border p-4 flex-row items-center gap-3">
+              <TouchableOpacity
+                disabled={!event.source_url}
+                onPress={() => event.source_url && Linking.openURL(event.source_url)}
+                className="bg-card rounded-xl border border-border p-4 flex-row items-center gap-3"
+                activeOpacity={event.source_url ? 0.7 : 1}
+              >
                 <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
                   <Ionicons name="pricetag" size={20} color="#6C5CE7" />
                 </View>
-                <Text className="text-sm font-semibold text-text-primary">{event.price_info}</Text>
-              </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-text-primary">{event.price_info}</Text>
+                  {event.source_url && (
+                    <Text className="text-xs text-[#009CDE] mt-0.5">Tickets auf Ticketmaster ansehen →</Text>
+                  )}
+                </View>
+                {event.source_url && (
+                  <Ionicons name="open-outline" size={16} color="#009CDE" />
+                )}
+              </TouchableOpacity>
             )}
           </View>
 
