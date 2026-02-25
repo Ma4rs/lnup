@@ -227,43 +227,67 @@ export const useEventStore = create<EventState>((set, get) => ({
         goingIds = new Set((goingRes.data ?? []).map((g: any) => g.event_id));
       }
 
-      const { data: rows, error } = await supabase
-        .from("events_with_counts")
-        .select("*, venues(*), profiles:created_by(*)")
-        .in("status", ["active", "past"])
-        .order("event_date", { ascending: true });
+      const now = Date.now();
+      const cacheExpired = now - get().lastFetchTimestamp > TM_CACHE_DURATION;
+      const shouldFetchTM = TICKETMASTER_API_KEY && (forceRefresh || cacheExpired || get().events.length === 0);
 
-      if (error) {
-        console.warn("Supabase event fetch error:", error.message);
+      const [dbResult, tmEvents] = await Promise.all([
+        supabase
+          .from("events_with_counts")
+          .select("*, venues(*), profiles:created_by(*)")
+          .in("status", ["active", "past"])
+          .order("event_date", { ascending: true }),
+        shouldFetchTM
+          ? fetchExternalEvents(city || "").catch((err) => {
+              console.warn("External event fetch failed:", err);
+              return [] as Event[];
+            })
+          : Promise.resolve([] as Event[]),
+      ]);
+
+      if (dbResult.error) {
+        console.warn("Supabase event fetch error:", dbResult.error.message);
         showError("Events konnten nicht geladen werden.");
         set({ isLoading: false });
         return;
       }
 
-      const events = (rows ?? []).map((row: any) =>
+      const dbEvents = (dbResult.data ?? []).map((row: any) =>
         mapRowToEvent(row, savedIds, goingIds)
       );
 
-      set({ events, savedEventIds: savedIds, goingEventIds: goingIds });
+      let allEvents = dbEvents;
 
-      const now = Date.now();
-      const cacheExpired = now - get().lastFetchTimestamp > TM_CACHE_DURATION;
-      const shouldFetchTM = TICKETMASTER_API_KEY && (forceRefresh || cacheExpired || events.length === 0);
+      if (tmEvents.length > 0) {
+        const existingKeys = new Set(
+          dbEvents.map((e) => `${e.title.toLowerCase().trim()}|${e.event_date}`)
+        );
+        const existingUrls = new Set(
+          dbEvents.map((e) => e.source_url).filter(Boolean)
+        );
+        const seenKeys = new Set<string>();
 
-      if (shouldFetchTM) {
-        try {
-          const externalEvents = await fetchExternalEvents(city || "");
-          if (externalEvents.length > 0) {
-            get().mergeExternalEvents(externalEvents);
-            persistExternalEvents(externalEvents).catch((err) =>
-              console.warn("Persist failed:", err)
-            );
-          }
-          set({ lastFetchTimestamp: now });
-        } catch (error) {
-          console.warn("External event fetch failed:", error);
-        }
+        const newTmEvents = tmEvents.filter((e) => {
+          if (e.source_url && existingUrls.has(e.source_url)) return false;
+          const key = `${e.title.toLowerCase().trim()}|${e.event_date}`;
+          if (existingKeys.has(key) || seenKeys.has(key)) return false;
+          seenKeys.add(key);
+          return true;
+        });
+
+        allEvents = [...dbEvents, ...newTmEvents];
+
+        persistExternalEvents(tmEvents).catch((err) =>
+          console.warn("Persist failed:", err)
+        );
       }
+
+      set({
+        events: allEvents,
+        savedEventIds: savedIds,
+        goingEventIds: goingIds,
+        ...(shouldFetchTM ? { lastFetchTimestamp: now } : {}),
+      });
     } catch (error) {
       console.warn("Event fetch failed:", error);
       showError("Verbindungsfehler. Bitte prüfe deine Internetverbindung.");

@@ -17,7 +17,7 @@ import { PhotoModeration } from "@/components/PhotoModeration";
 import { ReportModal } from "@/components/ReportModal";
 import { InviteModal } from "@/components/InviteModal";
 import { formatEventDate, formatTime } from "@/lib/utils";
-import { getCategoryLabel, getCategoryIcon } from "@/lib/categories";
+import { getCategoryLabel, getCategoryIcon, getCategoryGradient } from "@/lib/categories";
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -155,25 +155,41 @@ export default function EventDetailScreen() {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {event.images && event.images.length > 1 ? (
-          <View style={{ height: 220 }}>
-            <FlatList
-              data={event.images}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(_, i) => String(i)}
-              renderItem={({ item }) => (
-                <View style={{ width: Dimensions.get("window").width, height: 220 }}>
-                  <Image source={{ uri: item }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
+        {event.images && event.images.length > 1 ? (() => {
+          const [catColor] = getCategoryGradient(event.category);
+          return (
+            <View style={{ backgroundColor: catColor }}>
+              <View style={{ height: 220 }}>
+                <FlatList
+                  data={event.images}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(_, i) => String(i)}
+                  renderItem={({ item }) => (
+                    <View style={{ width: Dimensions.get("window").width, height: 220 }}>
+                      <Image source={{ uri: item }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
+                    </View>
+                  )}
+                />
+                <View className="absolute bottom-2 right-3 bg-black/50 rounded-full px-2.5 py-1">
+                  <Text className="text-xs text-white font-medium">{event.images.length} Fotos</Text>
                 </View>
-              )}
-            />
-            <View className="absolute bottom-2 right-3 bg-black/50 rounded-full px-2.5 py-1">
-              <Text className="text-xs text-white font-medium">{event.images.length} Fotos</Text>
+              </View>
+              <View
+                className="flex-row items-center px-3 py-1.5"
+                style={{ backgroundColor: catColor + "20" }}
+              >
+                <View className="flex-row items-center gap-1.5">
+                  <Ionicons name={getCategoryIcon(event.category) as any} size={12} color={catColor} />
+                  <Text style={{ color: catColor }} className="text-xs font-semibold">
+                    {getCategoryLabel(event.category)}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
-        ) : (
+          );
+        })() : (
           <EventCover category={event.category} imageUrl={event.image_url} size="detail" />
         )}
 

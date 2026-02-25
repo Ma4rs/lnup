@@ -11,47 +11,52 @@ interface EventCoverProps {
 }
 
 export function EventCover({ category, imageUrl, size = "card" }: EventCoverProps) {
-  const [colorStart] = getCategoryGradient(category);
-  const height = size === "detail" ? 200 : 140;
-  const iconSize = size === "detail" ? 48 : 36;
-  const textSize = size === "detail" ? "text-lg" : "text-sm";
+  const [colorStart, colorEnd] = getCategoryGradient(category);
+  const isDetail = size === "detail";
 
   if (imageUrl) {
-    const imageHeight = size === "detail" ? 220 : 150;
+    const imageHeight = isDetail ? 220 : 120;
     return (
-      <View style={{ height: imageHeight }}>
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
-          transition={200}
-        />
-        <View className="absolute bottom-2 left-2 flex-row items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-          <Ionicons name={getCategoryIcon(category) as any} size={12} color="#FFFFFF" />
-          <Text className="text-xs font-medium text-white">
-            {getCategoryLabel(category)}
-          </Text>
+      <View style={{ backgroundColor: colorStart }}>
+        <View style={{ height: imageHeight }}>
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: "100%", height: "100%" }}
+            contentFit="cover"
+            transition={200}
+          />
+        </View>
+        <View
+          className="flex-row items-center justify-between px-3 py-1.5"
+          style={{ backgroundColor: colorStart + "20" }}
+        >
+          <View className="flex-row items-center gap-1.5">
+            <Ionicons name={getCategoryIcon(category) as any} size={12} color={colorStart} />
+            <Text style={{ color: colorStart }} className="text-xs font-semibold">
+              {getCategoryLabel(category)}
+            </Text>
+          </View>
         </View>
       </View>
     );
   }
 
+  const placeholderHeight = isDetail ? 160 : 90;
   return (
     <View
       className="items-center justify-center"
-      style={{ height, backgroundColor: colorStart }}
+      style={{ height: placeholderHeight, backgroundColor: colorStart }}
     >
-      {/* Faded overlay for depth */}
       <View
         className="absolute inset-0"
         style={{ backgroundColor: "rgba(0,0,0,0.15)" }}
       />
       <Ionicons
         name={getCategoryIcon(category) as any}
-        size={iconSize}
+        size={isDetail ? 40 : 28}
         color="rgba(255,255,255,0.85)"
       />
-      <Text className={`${textSize} font-bold text-white/80 mt-1.5`}>
+      <Text className={`${isDetail ? "text-base" : "text-xs"} font-bold text-white/80 mt-1`}>
         {getCategoryLabel(category)}
       </Text>
     </View>

@@ -107,8 +107,10 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
           "info"
         );
       }
-    } catch {
-      useToastStore.getState().showToast("KI-Suche fehlgeschlagen.", "error");
+    } catch (err: any) {
+      const msg = err?.message || "KI-Suche fehlgeschlagen.";
+      console.warn("AI search error:", err);
+      useToastStore.getState().showToast(msg, "error");
     } finally {
       setIsDiscovering(false);
     }

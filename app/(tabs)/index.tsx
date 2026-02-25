@@ -52,7 +52,10 @@ export default function FeedScreen() {
 
   const filteredEvents = useMemo(() => {
     const filtered = activeEvents.filter((event) => {
-      if (city && event.venue?.city && event.venue.city !== city) return false;
+      if (city) {
+        const eventCity = event.venue?.city;
+        if (!eventCity || eventCity !== city) return false;
+      }
       if (!matchesDateFilter(event.event_date, dateFilter)) return false;
       if (categoryFilter && event.category !== categoryFilter) return false;
       return true;
