@@ -14,6 +14,7 @@ interface TMEvent {
     end?: {
       localTime?: string;
     };
+    status?: { code: string };
   };
   priceRanges?: { min: number; max: number; currency: string }[];
   images?: { url: string; width: number; height: number }[];
@@ -58,14 +59,16 @@ export async function fetchTicketmasterEvents(
   if (!apiKey) return [];
 
   try {
-    const ticketmasterCity = CITY_TO_ENGLISH[city] ?? city;
     const params = new URLSearchParams({
-      city: ticketmasterCity,
       countryCode: "DE",
-      size: "20",
+      size: city ? "50" : "200",
       sort: "date,asc",
       apikey: apiKey,
     });
+
+    if (city) {
+      params.set("city", CITY_TO_ENGLISH[city] ?? city);
+    }
 
     const response = await fetch(
       `https://app.ticketmaster.com/discovery/v2/events.json?${params}`
@@ -79,79 +82,81 @@ export async function fetchTicketmasterEvents(
     const data: TMResponse = await response.json();
     const tmEvents = data._embedded?.events ?? [];
 
-    return tmEvents.map((tm): Event => {
-      const tmVenue = tm._embedded?.venues?.[0];
-      const segmentName = tm.classifications?.[0]?.segment?.name ?? null;
-      const genreName = tm.classifications?.[0]?.genre?.name ?? null;
+    return tmEvents
+      .filter((tm) => tm.dates.status?.code !== "cancelled")
+      .map((tm): Event => {
+        const tmVenue = tm._embedded?.venues?.[0];
+        const segmentName = tm.classifications?.[0]?.segment?.name ?? null;
+        const genreName = tm.classifications?.[0]?.genre?.name ?? null;
 
-      const bestImage = tm.images
-        ?.filter((img) => img.width >= 500 && img.width <= 1200)
-        ?.sort((a, b) => b.width - a.width)
-        ?.[0]?.url
-        ?? tm.images?.sort((a, b) => b.width - a.width)?.[0]?.url
-        ?? null;
+        const bestImage = tm.images
+          ?.filter((img) => img.width >= 500 && img.width <= 1200)
+          ?.sort((a, b) => b.width - a.width)
+          ?.[0]?.url
+          ?? tm.images?.sort((a, b) => b.width - a.width)?.[0]?.url
+          ?? null;
 
-      let priceInfo = "";
-      if (tm.priceRanges?.length) {
-        const range = tm.priceRanges[0];
-        if (range.min === 0) {
-          priceInfo = "Kostenlos";
-        } else if (range.min === range.max) {
-          priceInfo = `${range.min}${range.currency === "EUR" ? "€" : range.currency}`;
-        } else {
-          priceInfo = `${range.min}–${range.max}${range.currency === "EUR" ? "€" : range.currency}`;
-        }
-      }
-
-      const venue: Venue | undefined = tmVenue
-        ? {
-            id: `tm-venue-${tmVenue.id}`,
-            name: tmVenue.name,
-            address: [
-              tmVenue.address?.line1,
-              CITY_TO_GERMAN[tmVenue.city?.name ?? ""] ?? tmVenue.city?.name,
-            ].filter(Boolean).join(", "),
-            city: CITY_TO_GERMAN[tmVenue.city?.name ?? ""] ?? tmVenue.city?.name ?? city,
-            lat: parseFloat(tmVenue.location?.latitude ?? "0"),
-            lng: parseFloat(tmVenue.location?.longitude ?? "0"),
-            google_place_id: null,
-            website: null,
-            instagram: null,
-            phone: null,
-            verified: false,
-            owner_id: null,
-            created_at: new Date().toISOString(),
+        let priceInfo = "";
+        if (tm.priceRanges?.length) {
+          const range = tm.priceRanges[0];
+          if (range.min === 0) {
+            priceInfo = "Kostenlos";
+          } else if (range.min === range.max) {
+            priceInfo = `${range.min}${range.currency === "EUR" ? "€" : range.currency}`;
+          } else {
+            priceInfo = `${range.min}–${range.max}${range.currency === "EUR" ? "€" : range.currency}`;
           }
-        : undefined;
+        }
 
-      return {
-        id: `tm-${tm.id}`,
-        title: tm.name,
-        description: tm.info?.substring(0, 300) ?? "",
-        venue_id: venue?.id ?? "",
-        venue,
-        series_id: null,
-        event_date: tm.dates.start.localDate,
-        time_start: tm.dates.start.localTime?.substring(0, 5) ?? "20:00",
-        time_end: tm.dates.end?.localTime?.substring(0, 5) ?? null,
-        category: mapTicketmasterSegment(segmentName, genreName),
-        price_info: priceInfo || "Siehe Ticketmaster",
-        source_type: "api_ticketmaster",
-        source_url: tm.url,
-        created_by: null,
-        status: "active",
-        ai_confidence: 0.95,
-        image_url: bestImage,
-        created_at: new Date().toISOString(),
-        is_private: false,
-        invite_code: null,
-        max_attendees: null,
-        saves_count: 0,
-        going_count: 0,
-        confirmations_count: 0,
-        photos_count: 0,
-      };
-    });
+        const tmCityName = tmVenue?.city?.name ?? "";
+        const germanCity = CITY_TO_GERMAN[tmCityName] ?? tmCityName;
+
+        const venue: Venue | undefined = tmVenue
+          ? {
+              id: `tm-venue-${tmVenue.id}`,
+              name: tmVenue.name,
+              address: [tmVenue.address?.line1, germanCity].filter(Boolean).join(", "),
+              city: germanCity || city,
+              lat: parseFloat(tmVenue.location?.latitude ?? "0"),
+              lng: parseFloat(tmVenue.location?.longitude ?? "0"),
+              google_place_id: null,
+              website: null,
+              instagram: null,
+              phone: null,
+              verified: false,
+              owner_id: null,
+              created_at: new Date().toISOString(),
+            }
+          : undefined;
+
+        return {
+          id: `tm-${tm.id}`,
+          title: tm.name,
+          description: tm.info?.substring(0, 300) ?? "",
+          venue_id: venue?.id ?? "",
+          venue,
+          series_id: null,
+          event_date: tm.dates.start.localDate,
+          time_start: tm.dates.start.localTime?.substring(0, 5) ?? "20:00",
+          time_end: tm.dates.end?.localTime?.substring(0, 5) ?? null,
+          category: mapTicketmasterSegment(segmentName, genreName),
+          price_info: priceInfo || "Siehe Ticketmaster",
+          source_type: "api_ticketmaster",
+          source_url: tm.url,
+          created_by: null,
+          status: "active",
+          ai_confidence: 0.95,
+          image_url: bestImage,
+          created_at: new Date().toISOString(),
+          is_private: false,
+          invite_code: null,
+          max_attendees: null,
+          saves_count: 0,
+          going_count: 0,
+          confirmations_count: 0,
+          photos_count: 0,
+        };
+      });
   } catch (error) {
     console.warn("Ticketmaster fetch failed:", error);
     return [];

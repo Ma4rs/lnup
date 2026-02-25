@@ -130,7 +130,7 @@ export async function fetchExternalEvents(city: string): Promise<Event[]> {
   // AI Discovery runs in parallel but is non-blocking —
   // API results are returned immediately, AI results merged when ready
   let aiEvents: Event[] = [];
-  if (GEMINI_API_KEY) {
+  if (GEMINI_API_KEY && city) {
     try {
       aiEvents = await discoverLocalEvents(city);
     } catch {

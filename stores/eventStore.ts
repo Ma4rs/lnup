@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { Event, EventPhoto, EventMember } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { fetchExternalEvents } from "@/lib/eventApis";
-import { TICKETMASTER_API_KEY, INITIAL_CITIES } from "@/lib/constants";
+import { TICKETMASTER_API_KEY } from "@/lib/constants";
 import { getRankForScore } from "@/lib/ranks";
 import { scheduleEventReminder, cancelScheduledNotification } from "@/lib/notifications";
 import { useToastStore } from "./toastStore";
@@ -12,12 +12,22 @@ function showError(msg: string) {
 }
 
 async function persistExternalEvents(events: Event[]): Promise<void> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return;
+  const seenCities = new Set<string>();
 
   for (const event of events) {
     try {
       if (!event.source_url) continue;
+
+      const cityName = event.venue?.city;
+      if (cityName && !seenCities.has(cityName)) {
+        seenCities.add(cityName);
+        await supabase
+          .from("cities")
+          .upsert(
+            { name: cityName, lat: event.venue?.lat ?? 0, lng: event.venue?.lng ?? 0 },
+            { onConflict: "name" }
+          );
+      }
 
       const { data: byUrl } = await supabase
         .from("events")
@@ -213,15 +223,9 @@ export const useEventStore = create<EventState>((set, get) => ({
         goingIds = new Set((goingRes.data ?? []).map((g: any) => g.event_id));
       }
 
-      let query = supabase
+      const { data: rows, error } = await supabase
         .from("events_with_counts")
-        .select("*, venues(*), profiles:created_by(*)");
-
-      if (city) {
-        query = query.eq("venues.city", city);
-      }
-
-      const { data: rows, error } = await query
+        .select("*, venues(*), profiles:created_by(*)")
         .in("status", ["active", "past"])
         .order("event_date", { ascending: true });
 
@@ -240,21 +244,12 @@ export const useEventStore = create<EventState>((set, get) => ({
 
       if (TICKETMASTER_API_KEY) {
         try {
-          const citiesToFetch = city ? [city] : [...INITIAL_CITIES];
-          const allExternal: Event[] = [];
-
-          for (const c of citiesToFetch) {
-            try {
-              const cityEvents = await fetchExternalEvents(c);
-              allExternal.push(...cityEvents);
-            } catch {
-              console.warn(`External fetch failed for ${c}`);
-            }
-          }
-
-          if (allExternal.length > 0) {
-            get().mergeExternalEvents(allExternal);
-            await persistExternalEvents(allExternal);
+          const externalEvents = await fetchExternalEvents(city || "");
+          if (externalEvents.length > 0) {
+            get().mergeExternalEvents(externalEvents);
+            persistExternalEvents(externalEvents).catch((err) =>
+              console.warn("Persist failed:", err)
+            );
           }
         } catch (error) {
           console.warn("External event fetch failed:", error);

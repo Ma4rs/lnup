@@ -332,7 +332,7 @@ CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING
 
 -- Venues: public read, authenticated create
 CREATE POLICY "Venues are public" ON public.venues FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create venues" ON public.venues FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can create venues" ON public.venues FOR INSERT WITH CHECK (true);
 CREATE POLICY "Owners can update venues" ON public.venues FOR UPDATE USING (auth.uid() = owner_id);
 
 -- Events: public read active, authenticated create
@@ -350,7 +350,9 @@ CREATE POLICY "Active events are public" ON public.events FOR SELECT USING (
     )
   )
 );
-CREATE POLICY "Authenticated users can create events" ON public.events FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can create events" ON public.events FOR INSERT WITH CHECK (
+  auth.role() = 'authenticated' OR source_type IN ('api_ticketmaster', 'ai_discovered')
+);
 CREATE POLICY "Creators can update own events" ON public.events FOR UPDATE USING (
   auth.uid() = created_by OR
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
@@ -479,6 +481,8 @@ CREATE TABLE public.cities (
 
 ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Cities are public" ON public.cities FOR SELECT USING (true);
+CREATE POLICY "Cities can be auto-added" ON public.cities FOR INSERT WITH CHECK (true);
+CREATE POLICY "Cities can be updated" ON public.cities FOR UPDATE USING (true);
 
 INSERT INTO public.cities (name, lat, lng) VALUES
   ('Deggendorf', 48.8317, 12.9589),
