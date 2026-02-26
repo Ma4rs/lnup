@@ -18,20 +18,21 @@ const SEARCH_QUERIES = [
 ];
 
 const DISCOVERY_PROMPT = `Du bist ein Event-Scout für die Stadt {city} in Deutschland.
-Suche im Internet nach lokalen Events, die in den nächsten 7 Tagen stattfinden.
+Nutze die Google-Suche um ECHTE, AKTUELLE Events zu finden die in den nächsten 14 Tagen stattfinden.
 
-Fokussiere dich auf KLEINE, LOKALE Events die NICHT auf großen Plattformen (Ticketmaster, Eventbrite) zu finden sind:
-- Themenabende in Restaurants (z.B. "Mexican Night", "Burger Special", "Weinprobe")
+WICHTIG: Erfinde KEINE Events! Nur Events die du tatsächlich im Internet gefunden hast.
+Jedes Event MUSS eine echte source_url haben (die Webseite wo du das Event gefunden hast).
+
+Suche nach:
+- Themenabende in Restaurants, Weinproben
 - Bar-Events (Pub Quiz, Karaoke, Open Mic, DJ-Abende)
 - Lokale Live-Musik in Kneipen/Bars
-- Food-Trucks, Street-Food-Märkte
-- Flohmärkte, Kunstmärkte, Handwerkermärkte
+- Flohmärkte, Kunstmärkte, Straßenfeste
 - Comedy-Abende, Poetry Slams
-- Workshops, Kurse, Kreativabende
+- Workshops, Kurse
 - Vereinsevents, lokale Feste
-- Sport-Events (Laufgruppen, Yoga im Park)
+- Sport-Events
 
-WICHTIG: Nur Events mit konkretem Datum, Uhrzeit und Ort. Keine generischen Angebote.
 Heute ist ${new Date().toISOString().split("T")[0]}.
 
 Antwort als JSON-Array. Jedes Event:
@@ -46,11 +47,11 @@ Antwort als JSON-Array. Jedes Event:
   "city": "${"{city}"}",
   "category": "nightlife|food_drink|concert|festival|sports|art|family|other",
   "price_info": "z.B. 10€, Kostenlos, Ab 5€",
-  "source_url": "URL der Quelle wenn verfügbar, sonst null",
+  "source_url": "Die URL der Webseite wo du das Event gefunden hast (PFLICHT)",
   "confidence": 0.0-1.0
 }
 
-Nur Events mit confidence >= 0.6 zurückgeben.
+Nur Events mit source_url und confidence >= 0.7 zurückgeben.
 Antworte NUR mit dem JSON-Array, kein anderer Text.
 Leeres Array [] wenn nichts gefunden.`;
 
@@ -91,6 +92,7 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
         ],
       },
     ],
+    tools: [{ google_search: {} }],
     generationConfig: {
       temperature: 0.2,
       maxOutputTokens: 8192,
@@ -161,7 +163,8 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
         e.date &&
         e.time_start &&
         e.venue_name &&
-        e.confidence >= 0.5 &&
+        e.confidence >= 0.7 &&
+        e.source_url &&
         e.date >= today &&
         e.date <= nextWeek
     )

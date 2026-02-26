@@ -273,7 +273,9 @@ export default function EventDetailScreen() {
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-text-primary">{event.price_info}</Text>
                   {event.source_url && (
-                    <Text className="text-xs text-[#009CDE] mt-0.5">Tickets auf Ticketmaster ansehen →</Text>
+                    <Text className="text-xs text-[#009CDE] mt-0.5">
+                      {event.source_type === "api_ticketmaster" ? "Tickets auf Ticketmaster ansehen →" : "Quelle ansehen →"}
+                    </Text>
                   )}
                 </View>
                 {event.source_url && (

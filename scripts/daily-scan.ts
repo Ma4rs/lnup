@@ -271,20 +271,22 @@ async function scanCitiesWithAi(result: ScanResult) {
 
 async function discoverEventsForCity(city: string, today: string): Promise<any[]> {
   const prompt = `Du bist ein Event-Scout für die Stadt ${city} in Deutschland.
-Suche nach lokalen Events, die in den nächsten 14 Tagen stattfinden (ab ${today}).
-Fokussiere dich auf KLEINE, LOKALE Events: Themenabende, Bar-Events, Live-Musik, Flohmärkte, Comedy, Workshops, Sport-Events.
-WICHTIG: Nur Events mit konkretem Datum, Uhrzeit und Ort.
+Nutze die Google-Suche um ECHTE, AKTUELLE Events zu finden die in den nächsten 14 Tagen stattfinden (ab ${today}).
+WICHTIG: Erfinde KEINE Events! Nur Events die du im Internet gefunden hast. Jedes Event MUSS eine echte source_url haben.
+
+Suche nach: Themenabende, Bar-Events, Live-Musik, Flohmärkte, Comedy, Workshops, Sport-Events.
 
 Antwort als JSON-Array:
-[{"title":"...","description":"...","date":"YYYY-MM-DD","time_start":"HH:MM","time_end":"HH:MM oder null","venue_name":"...","venue_address":"...","category":"nightlife|food_drink|concert|festival|sports|art|family|other","price_info":"...","source_url":"URL oder null","confidence":0.0-1.0}]
+[{"title":"...","description":"...","date":"YYYY-MM-DD","time_start":"HH:MM","time_end":"HH:MM oder null","venue_name":"...","venue_address":"...","category":"nightlife|food_drink|concert|festival|sports|art|family|other","price_info":"...","source_url":"URL der Quelle (PFLICHT)","confidence":0.0-1.0}]
 
-Nur Events mit confidence >= 0.6. Antworte NUR mit dem JSON-Array.`;
+Nur Events mit source_url und confidence >= 0.7. Antworte NUR mit dem JSON-Array.`;
 
   const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
       generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
     }),
   });
@@ -311,7 +313,8 @@ Nur Events mit confidence >= 0.6. Antworte NUR mit dem JSON-Array.`;
 
     return events.filter(
       (e: any) => e.title && e.date && e.time_start && e.venue_name
-        && e.confidence >= 0.5
+        && e.source_url
+        && e.confidence >= 0.7
         && e.date >= today && e.date <= nextTwoWeeks
     );
   } catch {
