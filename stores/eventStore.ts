@@ -11,6 +11,10 @@ function showError(msg: string) {
   useToastStore.getState().showToast(msg, "error");
 }
 
+function toTitleCase(str: string): string {
+  return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 async function persistExternalEvents(events: Event[]): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return;
@@ -41,7 +45,7 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
       if (seenKeys.has(dedupKey) || existingSet.has(dedupKey)) continue;
       seenKeys.add(dedupKey);
 
-      const cityName = event.venue?.city;
+      const cityName = event.venue?.city ? toTitleCase(event.venue.city) : "";
       if (cityName && !seenCities.has(cityName)) {
         seenCities.add(cityName);
         await supabase

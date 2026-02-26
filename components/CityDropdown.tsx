@@ -19,6 +19,10 @@ import { persistAiEvents } from "@/stores/eventStore";
 
 let cachedCities: string[] | null = null;
 
+function toTitleCase(str: string): string {
+  return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 interface CityDropdownProps {
   visible: boolean;
   onClose: () => void;
@@ -89,7 +93,7 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
   };
 
   const handleAiDiscover = async () => {
-    const cityName = search.trim();
+    const cityName = toTitleCase(search.trim());
     if (!cityName || isDiscovering) return;
 
     setIsDiscovering(true);

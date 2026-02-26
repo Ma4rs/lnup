@@ -1,6 +1,10 @@
 import type { Event, EventCategory, Venue } from "@/types";
 import { GEMINI_API_KEY } from "./constants";
 
+function toTitleCase(str: string): string {
+  return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
@@ -173,7 +177,7 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
         id: `ai-venue-${city}-${i}-${Date.now()}`,
         name: e.venue_name,
         address: e.venue_address || e.city,
-        city: e.city || city,
+        city: toTitleCase(e.city || city),
         lat: 0,
         lng: 0,
         google_place_id: null,
