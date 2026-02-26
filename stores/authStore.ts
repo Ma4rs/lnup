@@ -45,6 +45,8 @@ async function fetchProfileById(userId: string): Promise<Profile | null> {
   };
 }
 
+let skipNextAuthChange = false;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
@@ -61,6 +63,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (skipNextAuthChange) {
+          skipNextAuthChange = false;
+          return;
+        }
         if (session?.user) {
           const profile = await fetchProfileById(session.user.id);
           set({ user: profile, isAuthenticated: !!profile });
@@ -75,8 +81,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     set({ isLoading: true });
+    skipNextAuthChange = true;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      skipNextAuthChange = false;
       set({ isLoading: false });
       throw error;
     }
@@ -86,6 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (email, password, username) => {
     set({ isLoading: true });
+    skipNextAuthChange = true;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -94,10 +103,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       },
     });
     if (error) {
+      skipNextAuthChange = false;
       set({ isLoading: false });
       throw error;
     }
     if (data.user) {
+      await new Promise((r) => setTimeout(r, 500));
       const profile = await fetchProfileById(data.user.id);
       set({ user: profile, isAuthenticated: true, isLoading: false });
     } else {
