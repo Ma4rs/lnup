@@ -41,7 +41,7 @@ export default function ExtractEventScreen() {
   const handleExtract = async () => {
     Keyboard.dismiss();
     if (!url.trim()) {
-      Alert.alert("Fehler", "Bitte gib eine URL ein.");
+      useToastStore.getState().showToast("Bitte gib eine URL ein.", "error");
       return;
     }
 
@@ -50,12 +50,21 @@ export default function ExtractEventScreen() {
 
     try {
       const events = await extractEventsFromUrl(url.trim());
-      if (events.length === 0) {
-        Alert.alert("Keine Events gefunden", "Auf dieser Seite konnten keine Events erkannt werden.");
-      }
       setExtractedEvents(events);
+      if (events.length === 0) {
+        useToastStore.getState().showToast("Auf dieser Seite wurden keine Events erkannt.", "info");
+      } else {
+        useToastStore.getState().showToast(
+          `${events.length} Event${events.length !== 1 ? "s" : ""} erkannt.`,
+          "success"
+        );
+      }
     } catch (error: any) {
-      Alert.alert("Fehler", error?.message ?? "Event-Erkennung fehlgeschlagen.");
+      const msg = error?.message ?? "Event-Erkennung fehlgeschlagen.";
+      useToastStore.getState().showToast(msg, "error");
+      if (typeof Alert !== "undefined" && Alert.alert) {
+        Alert.alert("Fehler", msg);
+      }
     } finally {
       setIsExtracting(false);
     }
@@ -63,7 +72,7 @@ export default function ExtractEventScreen() {
 
   const handleSubmit = async (event: ExtractedEvent, index: number) => {
     if (!user) {
-      Alert.alert("Nicht angemeldet", "Bitte melde dich an.");
+      useToastStore.getState().showToast("Bitte melde dich an.", "error");
       return;
     }
 
@@ -120,10 +129,14 @@ export default function ExtractEventScreen() {
 
       if (error) throw error;
 
-      useToastStore.getState().showToast("Zur Prüfung eingereicht!", "success");
+      useToastStore.getState().showToast("Event zur Prüfung eingereicht!", "success");
       setExtractedEvents((prev) => prev.filter((_, i) => i !== index));
     } catch (error: any) {
-      Alert.alert("Fehler", error?.message ?? "Event konnte nicht eingereicht werden.");
+      const msg = error?.message ?? "Event konnte nicht eingereicht werden.";
+      useToastStore.getState().showToast(msg, "error");
+      if (typeof Alert !== "undefined" && Alert.alert) {
+        Alert.alert("Fehler", msg);
+      }
     } finally {
       setSubmittingId(null);
     }

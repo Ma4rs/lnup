@@ -139,6 +139,13 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
 
   const discovered = parseJsonArray<DiscoveredEvent>(text);
 
+  if (discovered.length === 0 && text) {
+    console.warn(
+      "[discoverLocalEvents] Gemini lieferte 0 Events. Rohtext (Auszug):",
+      text.substring(0, 600)
+    );
+  }
+
   const groundingUrlSet = new Set(
     groundingUrls.map((u) => normalizeUrl(u))
   );

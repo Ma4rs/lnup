@@ -27,15 +27,12 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
     throw new Error("Gemini API-Key fehlt. Bitte in .env konfigurieren.");
   }
 
-  const useJsonMode = !options.tools || options.tools.length === 0;
-
+  // JSON-Modus auch mit Google Search anfordern, damit die Antwort ein parsebares Array bleibt
   const generationConfig: Record<string, unknown> = {
     temperature: options.temperature ?? 0.2,
     maxOutputTokens: options.maxOutputTokens ?? 8192,
+    response_mime_type: "application/json",
   };
-  if (useJsonMode) {
-    generationConfig.response_mime_type = "application/json";
-  }
 
   const body: Record<string, unknown> = {
     contents: options.contents,
@@ -61,18 +58,24 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
 
     if (response.ok) break;
 
-    if (response.status === 429 && attempt < MAX_RETRIES) {
+    const errorBody = await response.text().catch(() => "");
+    console.warn(`Gemini API error ${response.status}:`, errorBody);
+
+    const retryable = response.status === 429 || response.status === 503;
+    if (retryable && attempt < MAX_RETRIES) {
       const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-      console.warn(`Gemini 429 rate limit, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);
+      console.warn(`Gemini ${response.status}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
       continue;
     }
 
-    const errorBody = await response.text().catch(() => "");
-    console.warn(`Gemini API error ${response.status}:`, errorBody);
-
     if (response.status === 429) {
       throw new Error("Rate-Limit erreicht. Bitte warte eine Minute und versuche es erneut.");
+    }
+    if (response.status === 503) {
+      throw new Error(
+        "Der KI-Service ist gerade stark ausgelastet. Bitte in ein paar Minuten erneut versuchen."
+      );
     }
     throw new Error(`Gemini API Fehler (${response.status})`);
   }

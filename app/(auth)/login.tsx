@@ -30,12 +30,95 @@ export default function LoginScreen() {
       return;
     }
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       router.replace("/(tabs)");
-    } catch {
-      showToast("Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.", "error");
+    } catch (e: any) {
+      const msg =
+        e?.message === "Invalid login credentials"
+          ? "E-Mail oder Passwort falsch."
+          : e?.message?.includes("Email not confirmed")
+            ? "Bitte bestätige zuerst deine E-Mail (Link in der Mail)."
+            : e?.message ?? "Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.";
+      showToast(msg, "error");
     }
   };
+
+  const formContent = (
+    <>
+      {/* Logo */}
+      <View className="items-center mb-12">
+        <Text className="text-5xl font-black text-primary mb-2">LNUP</Text>
+        <Text className="text-sm text-text-secondary">
+          Local Nights, Unique Places
+        </Text>
+      </View>
+
+      {/* Form */}
+      <View className="gap-4 mb-6">
+        <View>
+          <Text className="text-sm font-medium text-text-secondary mb-1.5">
+            E-Mail
+          </Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="deine@email.de"
+            placeholderTextColor={COLORS.textMuted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete={Platform.OS === "web" ? "email" : undefined}
+            className="bg-card border border-border rounded-xl px-4 py-3.5 text-text-primary text-base"
+          />
+        </View>
+
+        <View>
+          <Text className="text-sm font-medium text-text-secondary mb-1.5">
+            Passwort
+          </Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor={COLORS.textMuted}
+            secureTextEntry
+            autoComplete={Platform.OS === "web" ? "current-password" : undefined}
+            className="bg-card border border-border rounded-xl px-4 py-3.5 text-text-primary text-base"
+          />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => router.push("/(auth)/forgot-password")}
+        className="items-end mb-6"
+      >
+        <Text className="text-sm text-primary font-medium">Passwort vergessen?</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={handleLogin}
+        disabled={isLoading}
+        className={`rounded-xl py-4 items-center ${
+          isLoading ? "bg-primary/50" : "bg-primary"
+        }`}
+      >
+        <Text className="text-white font-bold text-base">
+          {isLoading ? "Wird angemeldet..." : "Anmelden"}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push("/(auth)/register")}
+        className="mt-4 items-center"
+      >
+        <Text className="text-sm text-text-secondary">
+          Kein Konto?{" "}
+          <Text className="text-primary font-medium">Registrieren</Text>
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const isWeb = Platform.OS === "web";
 
   return (
     <KeyboardAvoidingView
@@ -43,76 +126,20 @@ export default function LoginScreen() {
       className="flex-1 bg-background"
       style={{ paddingTop: insets.top }}
     >
-      <View className="flex-1 justify-center px-6">
-        {/* Logo */}
-        <View className="items-center mb-12">
-          <Text className="text-5xl font-black text-primary mb-2">LNUP</Text>
-          <Text className="text-sm text-text-secondary">
-            Local Nights, Unique Places
-          </Text>
-        </View>
-
-        {/* Form */}
-        <View className="gap-4 mb-6">
-          <View>
-            <Text className="text-sm font-medium text-text-secondary mb-1.5">
-              E-Mail
-            </Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="deine@email.de"
-              placeholderTextColor={COLORS.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              className="bg-card border border-border rounded-xl px-4 py-3.5 text-text-primary text-base"
-            />
-          </View>
-
-          <View>
-            <Text className="text-sm font-medium text-text-secondary mb-1.5">
-              Passwort
-            </Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              placeholderTextColor={COLORS.textMuted}
-              secureTextEntry
-              className="bg-card border border-border rounded-xl px-4 py-3.5 text-text-primary text-base"
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/forgot-password")}
-          className="items-end mb-6"
+      {isWeb ? (
+        <form
+          className="flex-1 justify-center px-6"
+          style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
         >
-          <Text className="text-sm text-primary font-medium">Passwort vergessen?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleLogin}
-          disabled={isLoading}
-          className={`rounded-xl py-4 items-center ${
-            isLoading ? "bg-primary/50" : "bg-primary"
-          }`}
-        >
-          <Text className="text-white font-bold text-base">
-            {isLoading ? "Wird angemeldet..." : "Anmelden"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/register")}
-          className="mt-4 items-center"
-        >
-          <Text className="text-sm text-text-secondary">
-            Kein Konto?{" "}
-            <Text className="text-primary font-medium">Registrieren</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {formContent}
+        </form>
+      ) : (
+        <View className="flex-1 justify-center px-6">{formContent}</View>
+      )}
     </KeyboardAvoidingView>
   );
 }

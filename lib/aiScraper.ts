@@ -35,19 +35,57 @@ Gib ein JSON-Array zurück. Jedes Event hat folgende Felder:
 
 Wenn keine Events gefunden werden, gib ein leeres Array zurück: []`;
 
+/** Versucht, den Inhalt einer URL zu laden (funktioniert nur bei CORS-freundlichen Seiten). */
+async function fetchUrlContent(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: "text/html,text/plain;q=0.9,*/*;q=0.8" },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const html = await res.text();
+    if (!html || html.length < 50) return null;
+    return stripHtmlToText(html).substring(0, 25000);
+  } catch {
+    return null;
+  }
+}
+
+function stripHtmlToText(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function extractEventsFromUrl(url: string): Promise<ExtractedEvent[]> {
   if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API Key nicht konfiguriert. Bitte EXPO_GEMINI_API_KEY in .env setzen.");
+    throw new Error("Gemini API Key nicht konfiguriert. Bitte EXPO_PUBLIC_GEMINI_API_KEY in .env setzen.");
   }
+
+  const pageContent = await fetchUrlContent(url);
+  const useContent = pageContent && pageContent.length > 100;
 
   const { text } = await geminiRequest({
     apiKey: GEMINI_API_KEY,
     contents: [
       {
-        parts: [
-          { text: EXTRACTION_PROMPT },
-          { text: `URL: ${url}` },
-        ],
+        parts: useContent
+          ? [
+              { text: EXTRACTION_PROMPT },
+              { text: `Quelle: ${url}\n\nSeiteninhalt (zum Extrahieren der Events):\n\n${pageContent}` },
+            ]
+          : [
+              { text: EXTRACTION_PROMPT },
+              {
+                text: `Es wurde nur die folgende URL übergeben (der Seiteninhalt konnte nicht geladen werden, z.B. wegen CORS). Versuche anhand der URL und deines Wissens bzw. Suchfunktion Events zu ermitteln. Wenn du nichts Sicheres findest, gib [] zurück.\n\nURL: ${url}`,
+              },
+            ],
       },
     ],
     tools: [{ google_search: {} }],
