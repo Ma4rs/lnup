@@ -27,12 +27,15 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
     throw new Error("Gemini API-Key fehlt. Bitte in .env konfigurieren.");
   }
 
-  // JSON-Modus auch mit Google Search anfordern, damit die Antwort ein parsebares Array bleibt
+  // Bei Tool-Nutzung (z. B. google_search) darf response_mime_type NICHT gesetzt werden (API 400).
+  const useJsonMode = !options.tools || options.tools.length === 0;
   const generationConfig: Record<string, unknown> = {
     temperature: options.temperature ?? 0.2,
     maxOutputTokens: options.maxOutputTokens ?? 8192,
-    response_mime_type: "application/json",
   };
+  if (useJsonMode) {
+    generationConfig.response_mime_type = "application/json";
+  }
 
   const body: Record<string, unknown> = {
     contents: options.contents,
