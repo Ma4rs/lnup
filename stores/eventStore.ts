@@ -16,6 +16,17 @@ function toTitleCase(str: string): string {
   return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
+/** Normalisiert auf PostgreSQL TIME-Format "HH:mm". Leer oder ungültig → "20:00". */
+function toTime(value: string | null | undefined): string {
+  if (!value || typeof value !== "string") return "20:00";
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})/);
+  if (match) return `${match[1].padStart(2, "0")}:${match[2]}`;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed))
+    return trimmed.substring(11, 16);
+  return "20:00";
+}
+
 async function persistExternalEvents(events: Event[]): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return;
@@ -40,6 +51,8 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
   const existingSet = new Set(
     (existingEvents ?? []).map((e: any) => `${e.title}|${e.event_date}`)
   );
+
+  let anyEventFailed = false;
 
   for (const event of events) {
     try {
@@ -69,28 +82,36 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
         if (venues && venues.length > 0) {
           venueId = venues[0].id;
         } else {
-          const { data: newVenue } = await supabase
+          const address = (event.venue.address?.trim() || event.venue.name || "Unbekannt").substring(0, 500);
+          const city = (event.venue.city?.trim() || "").substring(0, 200);
+          const { data: newVenue, error: venueErr } = await supabase
             .from("venues")
             .insert({
-              name: event.venue.name,
-              address: event.venue.address,
-              city: event.venue.city,
-              lat: event.venue.lat,
-              lng: event.venue.lng,
+              name: event.venue.name.substring(0, 255),
+              address,
+              city,
+              lat: event.venue.lat ?? 0,
+              lng: event.venue.lng ?? 0,
             })
             .select("id")
             .single();
+          if (venueErr) {
+            console.warn("[persistEventsToDb] Venue insert failed:", venueErr.message, event.venue?.name);
+            continue;
+          }
           venueId = newVenue?.id ?? null;
         }
       }
 
-      await supabase.from("events").insert({
+      const timeStart = toTime(event.time_start);
+      const timeEnd = event.time_end ? toTime(event.time_end) : null;
+      const { error: eventErr } = await supabase.from("events").insert({
         title: event.title,
         description: event.description || "",
         venue_id: venueId,
         event_date: event.event_date,
-        time_start: event.time_start,
-        time_end: event.time_end,
+        time_start: timeStart,
+        time_end: timeEnd,
         category: event.category,
         price_info: event.price_info || null,
         source_type: event.source_type,
@@ -99,10 +120,17 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
         ai_confidence: event.ai_confidence,
         image_url: event.image_url,
       });
-    } catch {
-      // Skip individual events that fail
+      if (eventErr) {
+        console.warn("[persistEventsToDb] Event insert failed:", eventErr.message, event.title);
+        anyEventFailed = true;
+      }
+    } catch (e) {
+      console.warn("[persistEventsToDb]", e);
+      anyEventFailed = true;
     }
   }
+
+  if (anyEventFailed) showError("Einige Events konnten nicht gespeichert werden.");
 }
 
 const TM_CACHE_DURATION = 60 * 60 * 1000; // 1 hour

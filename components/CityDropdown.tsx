@@ -101,6 +101,8 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
         useEventStore.getState().mergeExternalEvents(discovered);
         try {
           await persistAiEvents(discovered);
+          // Refetch aus DB, damit die Liste echte IDs hat und mit der DB übereinstimmt
+          await useEventStore.getState().fetchEvents(undefined, true);
         } catch (persistErr) {
           console.warn("AI event persist failed:", persistErr);
         }

@@ -121,7 +121,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await supabase.auth.signOut();
     } finally {
-      set({ user: null, isAuthenticated: false });
+      // Store-Update verzögern, damit Navigation/Unmount vor dem Re-Render passiert (vermeidet React #300).
+      setTimeout(() => set({ user: null, isAuthenticated: false }), 0);
     }
   },
 

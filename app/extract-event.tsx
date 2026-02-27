@@ -20,6 +20,15 @@ import { supabase } from "@/lib/supabase";
 import { extractEventsFromUrl, type ExtractedEvent } from "@/lib/aiScraper";
 import { COLORS } from "@/lib/constants";
 
+function normalizeTime(value: string | null | undefined): string | null {
+  if (!value || typeof value !== "string") return null;
+  const t = value.trim();
+  const match = t.match(/^(\d{1,2}):(\d{2})/);
+  if (match) return `${match[1].padStart(2, "0")}:${match[2]}`;
+  if (t.length >= 5 && /^\d{2}:\d{2}/.test(t.substring(0, 5))) return t.substring(0, 5);
+  return null;
+}
+
 export default function ExtractEventScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -72,12 +81,14 @@ export default function ExtractEventScreen() {
       if (existingVenue) {
         venueId = existingVenue.id;
       } else {
+        const address = (event.venue_address?.trim() || event.venue_name || "Unbekannt").substring(0, 500);
+        const city = (event.city?.trim() || "").substring(0, 200);
         const { data: newVenue, error: venueError } = await supabase
           .from("venues")
           .insert({
-            name: event.venue_name,
-            address: event.venue_address,
-            city: event.city,
+            name: event.venue_name.substring(0, 255),
+            address,
+            city,
             lat: 0,
             lng: 0,
           })
@@ -88,18 +99,21 @@ export default function ExtractEventScreen() {
         venueId = newVenue.id;
       }
 
+      const timeStart = normalizeTime(event.time_start) || "20:00";
+      const timeEnd = event.time_end ? normalizeTime(event.time_end) : null;
+
       const { error } = await supabase.from("events").insert({
         title: event.title,
         description: event.description,
         venue_id: venueId,
         event_date: event.date,
-        time_start: event.time_start,
-        time_end: event.time_end,
+        time_start: timeStart,
+        time_end: timeEnd,
         category: event.category,
         price_info: event.price_info || null,
         source_type: "ai_scraped",
         source_url: url.trim(),
-        created_by: null,
+        created_by: user.id,
         status: "active",
         ai_confidence: event.confidence,
       });
@@ -123,7 +137,7 @@ export default function ExtractEventScreen() {
     >
       <View className="flex-row items-center px-4 py-3 gap-3">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace("/(tabs)")}
           className="w-10 h-10 rounded-full bg-card items-center justify-center"
         >
           <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />

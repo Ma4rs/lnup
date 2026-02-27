@@ -36,7 +36,7 @@ export default function RootLayout() {
   if (!isReady) return null;
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} className={isDark ? "dark" : ""}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Toast />
       <Stack

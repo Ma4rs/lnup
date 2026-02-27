@@ -155,8 +155,9 @@ export default function SettingsScreen() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      await logout();
+      // Navigation zuerst, damit Settings unmountet bevor der Auth-Store aktualisiert wird (vermeidet React #300).
       router.replace("/(auth)/login");
+      await logout();
     } catch (e: any) {
       Alert.alert("Abmeldung fehlgeschlagen", e?.message ?? "Bitte erneut versuchen.");
     } finally {
