@@ -1,6 +1,7 @@
 import type { Event, EventCategory, Venue } from "@/types";
 import { GEMINI_API_KEY } from "./constants";
 import { geminiRequest, parseJsonArray } from "./geminiClient";
+import { getSourcesForCity } from "./eventSources";
 
 function toTitleCase(str: string): string {
   return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
@@ -20,14 +21,24 @@ const SEARCH_QUERIES = [
 ];
 
 function buildSystemInstruction(city: string, today: string, endDate: string, weekday: string) {
+  const sources = getSourcesForCity(city);
+  const websiteList = sources.websites.length > 0
+    ? `\n\nWICHTIGE QUELLEN – Durchsuche diese Webseiten gezielt nach Events:\n${sources.websites.map((u) => `- ${u}`).join("\n")}`
+    : "";
+  const instaList = sources.instagram.length > 0
+    ? `\n\nWICHTIGE INSTAGRAM-ACCOUNTS – Suche auf diesen Accounts nach Event-Ankündigungen:\n${sources.instagram.map((h) => `- https://www.instagram.com/${h}/`).join("\n")}`
+    : "";
+
   return `Du bist ein erfahrener Event-Scout für die Stadt ${city} in Deutschland.
 Deine Aufgabe: Finde ECHTE, AKTUELLE Events die zwischen ${today} (${weekday}) und ${endDate} stattfinden.
+${websiteList}${instaList}
 
 REGELN:
 - Erfinde NIEMALS Events. Nur Events die du tatsächlich über die Google-Suche findest.
 - Jedes Event MUSS eine echte, funktionierende source_url haben (Webseite ODER Instagram-Beitrag/Seite).
 - Suche auch gezielt auf Instagram: Clubs, Bars und Locations posten dort oft ihre Events. Instagram-URLs (instagram.com/...) sind als source_url erlaubt.
 - Gib NUR Events zurück bei denen du dir sicher bist (confidence >= 0.7).
+- Durchsuche ZUERST die oben genannten Quellen (falls vorhanden), DANN suche allgemein.
 
 NICHT zurückgeben:
 - Regelmäßige Öffnungszeiten von Restaurants/Bars (z.B. "Happy Hour jeden Freitag")
@@ -120,7 +131,11 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
     .toISOString()
     .split("T")[0];
 
-  const searchQueries = SEARCH_QUERIES.map((q) => q.replace("{city}", city));
+  const sources = getSourcesForCity(city);
+  const baseQueries = SEARCH_QUERIES.map((q) => q.replace("{city}", city));
+  const sourceQueries = sources.websites.map((url) => `site:${new URL(url).hostname} events veranstaltungen`);
+  const instaQueries = sources.instagram.map((handle) => `site:instagram.com ${handle} event`);
+  const searchQueries = [...baseQueries, ...sourceQueries, ...instaQueries];
 
   const { text, groundingUrls } = await geminiRequest({
     apiKey: GEMINI_API_KEY,
