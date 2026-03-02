@@ -33,14 +33,17 @@ async function persistExternalEvents(events: Event[]): Promise<void> {
   await persistEventsToDb(events, ["api_ticketmaster"]);
 }
 
-export async function persistAiEvents(events: Event[]): Promise<void> {
-  await persistEventsToDb(events, ["ai_discovered", "ai_scraped"]);
+export async function persistAiEvents(events: Event[]): Promise<{ saved: number; failed: number }> {
+  const result = await persistEventsToDb(events, ["ai_discovered", "ai_scraped"]);
   clearAiCache();
+  return result;
 }
 
-async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promise<void> {
+async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promise<{ saved: number; failed: number }> {
   const seenKeys = new Set<string>();
   const seenCities = new Set<string>();
+  let saved = 0;
+  let failed = 0;
 
   const { data: existingEvents } = await supabase
     .from("events")
@@ -51,8 +54,6 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
   const existingSet = new Set(
     (existingEvents ?? []).map((e: any) => `${e.title}|${e.event_date}`)
   );
-
-  let anyEventFailed = false;
 
   for (const event of events) {
     try {
@@ -122,15 +123,20 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
       });
       if (eventErr) {
         console.warn("[persistEventsToDb] Event insert failed:", eventErr.message, event.title);
-        anyEventFailed = true;
+        failed++;
+      } else {
+        saved++;
       }
     } catch (e) {
       console.warn("[persistEventsToDb]", e);
-      anyEventFailed = true;
+      failed++;
     }
   }
 
-  if (anyEventFailed) showError("Einige Events konnten nicht gespeichert werden.");
+  if (failed > 0) {
+    showError(`${failed} von ${saved + failed} Events konnten nicht gespeichert werden.`);
+  }
+  return { saved, failed };
 }
 
 const TM_CACHE_DURATION = 60 * 60 * 1000; // 1 hour

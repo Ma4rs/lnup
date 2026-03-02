@@ -102,12 +102,19 @@ export default function FeedScreen() {
       const discovered = await discoverLocalEvents(city);
       if (discovered.length > 0) {
         mergeExternalEvents(discovered);
-        await persistAiEvents(discovered);
-        useToastStore.getState().showToast(
-          `${discovered.length} Events in ${city} gefunden & gespeichert!`,
-          "success"
-        );
-        await fetchEvents(city, true);
+        const { saved, failed } = await persistAiEvents(discovered);
+        if (saved > 0) {
+          useToastStore.getState().showToast(
+            `${saved} Event${saved !== 1 ? "s" : ""} in ${city} gefunden & gespeichert!`,
+            "success"
+          );
+        }
+        if (failed > 0 && saved === 0) {
+          useToastStore.getState().showToast(
+            `${discovered.length} Events gefunden, konnten aber nicht gespeichert werden.`,
+            "error"
+          );
+        }
       } else {
         useToastStore.getState().showToast(
           `Keine neuen Events in ${city} gefunden.`,

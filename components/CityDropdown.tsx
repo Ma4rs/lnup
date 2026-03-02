@@ -100,16 +100,25 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
       if (discovered.length > 0) {
         useEventStore.getState().mergeExternalEvents(discovered);
         try {
-          await persistAiEvents(discovered);
-          // Refetch aus DB, damit die Liste echte IDs hat und mit der DB übereinstimmt
-          await useEventStore.getState().fetchEvents(undefined, true);
+          const { saved, failed } = await persistAiEvents(discovered);
+          if (saved > 0) {
+            useToastStore.getState().showToast(
+              `${saved} Event${saved !== 1 ? "s" : ""} in ${cityName} gefunden & gespeichert!`,
+              "success"
+            );
+          } else if (failed > 0) {
+            useToastStore.getState().showToast(
+              `${discovered.length} Events gefunden, konnten aber nicht gespeichert werden.`,
+              "error"
+            );
+          }
         } catch (persistErr) {
           console.warn("AI event persist failed:", persistErr);
+          useToastStore.getState().showToast(
+            `${discovered.length} Events gefunden (nur lokal sichtbar).`,
+            "info"
+          );
         }
-        useToastStore.getState().showToast(
-          `${discovered.length} Events in ${cityName} gefunden & gespeichert!`,
-          "success"
-        );
         if (setAsSelected) {
           setCity(cityName);
           setSearch("");
