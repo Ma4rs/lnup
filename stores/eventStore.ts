@@ -73,22 +73,23 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
       }
 
       let venueId: string | null = null;
-      if (event.venue) {
+      const venueName = event.venue?.name;
+      if (event.venue && venueName) {
         const { data: venues } = await supabase
           .from("venues")
           .select("id")
-          .eq("name", event.venue.name)
+          .eq("name", venueName)
           .limit(1);
 
         if (venues && venues.length > 0) {
           venueId = venues[0].id;
         } else {
-          const address = (event.venue.address?.trim() || event.venue.name || "Unbekannt").substring(0, 500);
+          const address = (event.venue.address?.trim() || venueName || "Unbekannt").substring(0, 500);
           const city = (event.venue.city?.trim() || "").substring(0, 200);
           const { data: newVenue, error: venueErr } = await supabase
             .from("venues")
             .insert({
-              name: event.venue.name.substring(0, 255),
+              name: venueName.substring(0, 255),
               address,
               city,
               lat: event.venue.lat ?? 0,
@@ -97,7 +98,7 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
             .select("id")
             .single();
           if (venueErr) {
-            console.warn("[persistEventsToDb] Venue insert failed:", venueErr.message, event.venue?.name);
+            console.warn("[persistEventsToDb] Venue insert failed:", venueErr.message, venueName);
             continue;
           }
           venueId = newVenue?.id ?? null;
