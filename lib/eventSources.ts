@@ -23,27 +23,41 @@ const CITY_SOURCES: Record<string, CityEventSources> = {
       "https://www.deggendorf-pulsiert.de/",
       "https://www.deggendorf.de/rathaus-buergerservice/veranstaltungen",
       "https://www.deggendorfer-stadthallen.de/",
+      "https://www.scottys-deggendorf.de/",
     ],
     instagram: [
       "deggendorf_pulsiert",
       "fuchsbau.bayern",
       "deggendorfer_stadthallen",
+      "stage.club.deggendorf",
+      "scottys_deggendorf",
     ],
   },
   Passau: {
     websites: [
       "https://www.passau.de/Veranstaltungskalender.aspx",
       "https://www.passau-erleben.de/",
+      "https://www.passaubasscollective.com/",
     ],
     instagram: [
       "passau_erleben",
+      "kneipentourpassau",
+      "pbc.mp3",
+      "cubaclubbpassau",
+      "schaene_passau",
+      "zauberberg_passau",
     ],
   },
   Straubing: {
     websites: [
       "https://www.straubing.de/de/veranstaltungen.html",
     ],
-    instagram: [],
+    instagram: [
+      "peoplebar_straubing",
+      "kingz_lounge_straubing",
+      "lola_bar_straubing",
+      "wuid_straubing",
+    ],
   },
   Regensburg: {
     websites: [
@@ -52,6 +66,13 @@ const CITY_SOURCES: Record<string, CityEventSources> = {
     ],
     instagram: [
       "regensburg.de",
+      "heartregensburg",
+      "bar.bar.a.regensburg",
+      "finitoclub",
+      "scala_regensburg",
+      "club_schimmerlos",
+      "beatsclubregensburg",
+      "rauschgold_regensburg",
     ],
   },
 };
