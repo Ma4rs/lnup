@@ -52,7 +52,7 @@ export default function ExtractEventScreen() {
       const events = await extractEventsFromUrl(url.trim());
       setExtractedEvents(events);
       if (events.length === 0) {
-        useToastStore.getState().showToast("Auf dieser Seite wurden keine Events erkannt.", "info");
+        useToastStore.getState().showToast("Es konnte kein Event erkannt werden.", "info");
       } else {
         useToastStore.getState().showToast(
           `${events.length} Event${events.length !== 1 ? "s" : ""} erkannt.`,
@@ -195,9 +195,16 @@ export default function ExtractEventScreen() {
           </View>
 
           {isExtracting && (
-            <View className="items-center py-12">
-              <ActivityIndicator color="#6C5CE7" size="large" />
-              <Text className="text-sm text-text-muted mt-4">KI analysiert die Seite...</Text>
+            <View className="items-center justify-center py-16 px-6">
+              <View className="w-20 h-20 rounded-full bg-primary/15 items-center justify-center mb-5">
+                <ActivityIndicator color="#6C5CE7" size="large" />
+              </View>
+              <Text className="text-base font-semibold text-text-primary text-center">
+                URL wird durchsucht
+              </Text>
+              <Text className="text-sm text-text-muted text-center mt-2 max-w-[280px]">
+                KI analysiert die Seite – das kann einen Moment dauern.
+              </Text>
             </View>
           )}
 

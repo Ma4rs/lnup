@@ -83,7 +83,7 @@ export async function extractEventsFromUrl(url: string): Promise<ExtractedEvent[
           : [
               { text: EXTRACTION_PROMPT },
               {
-                text: `Es wurde nur die folgende URL übergeben (der Seiteninhalt konnte nicht geladen werden, z.B. wegen CORS). Versuche anhand der URL und deines Wissens bzw. Suchfunktion Events zu ermitteln. Wenn du nichts Sicheres findest, gib [] zurück.\n\nURL: ${url}`,
+                text: `Es wurde nur die folgende URL übergeben (der Seiteninhalt konnte nicht geladen werden, z.B. wegen CORS). Versuche anhand der URL und deiner Suchfunktion Events zu ermitteln. Wenn du nichts Sicheres findest, gib [] zurück.\n\nURL: ${url}`,
               },
             ],
       },
@@ -93,10 +93,29 @@ export async function extractEventsFromUrl(url: string): Promise<ExtractedEvent[
     maxOutputTokens: 4096,
   });
 
+  if (!text || typeof text !== "string") {
+    throw new Error("Die KI hat keine Antwort geliefert.");
+  }
+
+  const trimmed = text.trim();
   const parsed = parseJsonArray<ExtractedEvent>(text);
-  return parsed.filter(
+  const valid = parsed.filter(
     (e) => e.title && e.date && e.time_start && e.venue_name
   );
+
+  if (valid.length === 0) {
+    const looksLikeEmptyArray =
+      /^\[\s*\]$/.test(trimmed) ||
+      trimmed.replace(/\s/g, "") === "[]" ||
+      (trimmed.includes("[") && trimmed.includes("]") && trimmed.length < 100);
+    if (!looksLikeEmptyArray && trimmed.length > 20) {
+      throw new Error(
+        "Die KI-Antwort konnte nicht ausgewertet werden. Bitte andere URL oder andere Seite versuchen."
+      );
+    }
+  }
+
+  return valid;
 }
 
 export async function extractEventsFromText(text: string, sourceUrl?: string): Promise<ExtractedEvent[]> {
