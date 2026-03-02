@@ -31,6 +31,9 @@ const CITY_SOURCES: Record<string, CityEventSources> = {
       "deggendorfer_stadthallen",
       "stage.club.deggendorf",
       "scottys_deggendorf",
+      "samsbar.deggendorf",
+      "minibar.deggendorf",
+      "chaochao.deggendorf",
     ],
   },
   Passau: {
