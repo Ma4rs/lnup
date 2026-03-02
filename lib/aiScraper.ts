@@ -37,15 +37,42 @@ Wenn keine Events gefunden werden, gib ein leeres Array zurück: []
 
 WICHTIG: Antworte NUR mit dem JSON-Array. Kein Text davor oder danach, kein Markdown.`;
 
-/** Versucht, den Inhalt einer URL zu laden (funktioniert nur bei CORS-freundlichen Seiten). */
 async function fetchUrlContent(url: string): Promise<string | null> {
+  // 1. Direkt versuchen
+  const direct = await fetchWithTimeout(url);
+  if (direct) return direct;
+
+  // 2. CORS-Proxy als Fallback
+  const proxied = await fetchViaProxy(url);
+  if (proxied) return proxied;
+
+  return null;
+}
+
+async function fetchWithTimeout(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { Accept: "text/html,text/plain;q=0.9,*/*;q=0.8" },
     });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const html = await res.text();
+    if (!html || html.length < 50) return null;
+    return stripHtmlToText(html).substring(0, 25000);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchViaProxy(url: string): Promise<string | null> {
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(proxyUrl, { signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return null;
     const html = await res.text();
@@ -85,7 +112,17 @@ export async function extractEventsFromUrl(url: string): Promise<ExtractedEvent[
           : [
               { text: EXTRACTION_PROMPT },
               {
-                text: `Es wurde nur die folgende URL übergeben (der Seiteninhalt konnte nicht geladen werden, z.B. wegen CORS). Versuche anhand der URL und deiner Suchfunktion Events zu ermitteln. Wenn du nichts Sicheres findest, gib [] zurück.\n\nURL: ${url}`,
+                text: `Der Seiteninhalt der folgenden URL konnte nicht direkt geladen werden.
+
+AUFGABE: Besuche die URL über deine Google-Suchfunktion und finde alle Events/Veranstaltungen die dort gelistet sind.
+
+Gehe so vor:
+1. Suche nach "site:${new URL(url).hostname} veranstaltungen events" und ähnlichen Begriffen
+2. Durchsuche die Ergebnisse nach konkreten Events mit Datum, Uhrzeit, Location
+3. Für jedes gefundene Event: Extrahiere alle verfügbaren Details (Titel, Datum, Uhrzeit, Ort, Preis)
+4. Wenn keine Events gefunden werden, gib [] zurück
+
+URL: ${url}`,
               },
             ],
       },
