@@ -274,9 +274,11 @@ function processDiscoveredEvents(
 
   if (discovered.length === 0 && text) {
     console.warn(
-      "[discoverLocalEvents] Gemini lieferte 0 Events. Rohtext (Auszug):",
+      "[processDiscoveredEvents] Parser lieferte 0 Events. Rohtext (Auszug):",
       text.substring(0, 600)
     );
+  } else {
+    console.log(`[processDiscoveredEvents] Parsed ${discovered.length} events, filtering...`);
   }
 
   const groundingUrlSet = new Set(

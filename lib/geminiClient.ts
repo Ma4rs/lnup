@@ -165,20 +165,33 @@ export function parseJsonArray<T>(text: string): T[] {
   const lastBrace = jsonStr.lastIndexOf("}");
   if (lastBrace > 0) {
     jsonStr = jsonStr.substring(0, lastBrace + 1);
-    // Trailing-Komma entfernen, dann schließen
     const trimmedForParse = jsonStr.replace(/,\s*$/, "") + "]";
     try {
       const parsed = JSON.parse(trimmedForParse);
       return Array.isArray(parsed) ? parsed : [];
     } catch { /* weiter */ }
 
-    // Letztes vollständiges "}, " als Abschnitt nehmen
     const lastComplete = jsonStr.lastIndexOf("},");
     if (lastComplete > 0) {
       try {
         return JSON.parse(jsonStr.substring(0, lastComplete + 1) + "]");
-      } catch { /* aufgeben */ }
+      } catch { /* weiter */ }
     }
+  }
+
+  // 5. Einzelne Objekte retten — jedes {...} einzeln parsen
+  const objectMatches = text.match(/\{[^{}]*\}/g);
+  if (objectMatches && objectMatches.length > 0) {
+    const rescued: T[] = [];
+    for (const obj of objectMatches) {
+      try {
+        const parsed = JSON.parse(obj);
+        if (parsed && typeof parsed === "object" && parsed.title) {
+          rescued.push(parsed);
+        }
+      } catch { /* skip */ }
+    }
+    if (rescued.length > 0) return rescued;
   }
 
   return [];
