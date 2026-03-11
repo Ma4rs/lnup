@@ -211,8 +211,8 @@ function mapRowToEvent(row: any, savedIds?: Set<string>, goingIds?: Set<string>)
 
   return {
     id: row.id,
-    title: row.title,
-    description: row.description,
+    title: row.title ?? "",
+    description: row.description ?? "",
     venue_id: row.venue_id,
     venue,
     series_id: row.series_id,
@@ -306,7 +306,7 @@ export const useEventStore = create<EventState>((set, get) => ({
 
       if (tmEvents.length > 0) {
         const existingKeys = new Set(
-          dbEvents.map((e) => `${e.title.toLowerCase().trim()}|${e.event_date}`)
+          dbEvents.map((e) => `${(e.title ?? "").toLowerCase().trim()}|${e.event_date}`)
         );
         const existingUrls = new Set(
           dbEvents.map((e) => e.source_url).filter(Boolean)
@@ -315,7 +315,7 @@ export const useEventStore = create<EventState>((set, get) => ({
 
         const newTmEvents = tmEvents.filter((e) => {
           if (e.source_url && existingUrls.has(e.source_url)) return false;
-          const key = `${e.title.toLowerCase().trim()}|${e.event_date}`;
+          const key = `${(e.title ?? "").toLowerCase().trim()}|${e.event_date}`;
           if (existingKeys.has(key) || seenKeys.has(key)) return false;
           seenKeys.add(key);
           return true;
@@ -483,13 +483,13 @@ export const useEventStore = create<EventState>((set, get) => ({
         state.events.map((e) => e.source_url).filter(Boolean)
       );
       const existingKeys = new Set(
-        state.events.map((e) => `${e.title.toLowerCase().trim()}|${e.event_date}`)
+        state.events.map((e) => `${(e.title ?? "").toLowerCase().trim()}|${e.event_date}`)
       );
 
       const newEvents = externalEvents.filter((e) => {
         if (existingIds.has(e.id)) return false;
         if (e.source_url && existingUrls.has(e.source_url)) return false;
-        const key = `${e.title.toLowerCase().trim()}|${e.event_date}`;
+        const key = `${(e.title ?? "").toLowerCase().trim()}|${e.event_date}`;
         if (existingKeys.has(key)) return false;
         existingKeys.add(key);
         if (e.source_url) existingUrls.add(e.source_url);

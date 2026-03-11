@@ -171,7 +171,7 @@ export async function fetchTicketmasterEvents(
 
         return {
           id: `tm-${tm.id}`,
-          title: tm.name,
+          title: tm.name ?? "Unbekanntes Event",
           description,
           venue_id: venue?.id ?? "",
           venue,

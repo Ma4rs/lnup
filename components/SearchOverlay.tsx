@@ -167,8 +167,8 @@ export function SearchOverlay({ visible, onClose }: SearchOverlayProps) {
     if (!q) return [];
     return events.filter(
       (e) =>
-        e.title.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q) ||
+        (e.title ?? "").toLowerCase().includes(q) ||
+        (e.description ?? "").toLowerCase().includes(q) ||
         (e.venue?.name ?? "").toLowerCase().includes(q)
     );
   }, [events, q]);

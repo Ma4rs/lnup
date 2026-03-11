@@ -6,7 +6,8 @@ import { supabase } from "./supabase";
 
 const SCAN_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
-function normalizeForComparison(str: string): string {
+function normalizeForComparison(str: string | undefined | null): string {
+  if (!str) return "";
   return str
     .toLowerCase()
     .replace(/[^a-z0-9äöüß]/g, "")

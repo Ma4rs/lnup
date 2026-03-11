@@ -19,13 +19,17 @@ export function InviteModal({ visible, onClose, inviteCode, eventTitle }: Invite
       await Share.share({
         message: `Du bist eingeladen: ${eventTitle}\n\nTritt bei mit Code: ${inviteCode}\nOder öffne: ${webUrl}`,
       });
-    } catch {}
+    } catch (e) {
+      console.warn("Share failed:", e);
+    }
   };
 
   const handleCopyCode = async () => {
     try {
       await Share.share({ message: inviteCode });
-    } catch {}
+    } catch (e) {
+      console.warn("Copy code failed:", e);
+    }
   };
 
   return (

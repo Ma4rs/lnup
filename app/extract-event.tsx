@@ -80,22 +80,23 @@ export default function ExtractEventScreen() {
     try {
       let venueId: string | null = null;
 
+      const venueName = event.venue_name?.trim() || "Unbekannte Location";
       const { data: existingVenue } = await supabase
         .from("venues")
         .select("id")
-        .ilike("name", `%${event.venue_name}%`)
+        .ilike("name", `%${venueName}%`)
         .limit(1)
         .maybeSingle();
 
       if (existingVenue) {
         venueId = existingVenue.id;
       } else {
-        const address = (event.venue_address?.trim() || event.venue_name || "Unbekannt").substring(0, 500);
+        const address = (event.venue_address?.trim() || venueName || "Unbekannt").substring(0, 500);
         const city = (event.city?.trim() || "").substring(0, 200);
         const { data: newVenue, error: venueError } = await supabase
           .from("venues")
           .insert({
-            name: event.venue_name.substring(0, 255),
+            name: venueName.substring(0, 255),
             address,
             city,
             lat: 0,

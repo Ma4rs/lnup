@@ -28,6 +28,7 @@ export default function EventDetailScreen() {
   const contentWidth = Math.min(windowWidth, 520);
   const router = useRouter();
   const event = useEventStore((s) => s.getEventById(id));
+  const isLoading = useEventStore((s) => s.isLoading);
   const toggleSave = useEventStore((s) => s.toggleSave);
   const toggleGoing = useEventStore((s) => s.toggleGoing);
   const confirmAttended = useEventStore((s) => s.confirmAttended);
@@ -78,7 +79,19 @@ export default function EventDetailScreen() {
             <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-        <SkeletonCard count={1} />
+        {isLoading ? (
+          <SkeletonCard count={1} />
+        ) : (
+          <View className="items-center justify-center py-20 px-8">
+            <Text className="text-4xl mb-4">😕</Text>
+            <Text className="text-lg font-semibold text-text-primary text-center mb-2">
+              Event nicht gefunden
+            </Text>
+            <Text className="text-sm text-text-secondary text-center">
+              Dieses Event existiert nicht mehr oder wurde entfernt.
+            </Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -87,7 +100,7 @@ export default function EventDetailScreen() {
   const isGoing = goingIds.has(event.id);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const [y, m, d] = event.event_date.split("-").map(Number);
+  const [y, m, d] = (event.event_date ?? "").split("-").map(Number);
   const eventDay = new Date(y, m - 1, d);
   const isPast = eventDay < today;
   const approvedPhotos = getPhotosForEvent(event.id);
@@ -147,7 +160,9 @@ export default function EventDetailScreen() {
                 await Share.share({
                   message: `${event.title} — ${formatEventDate(event.event_date)}, ${formatTime(event.time_start)} Uhr @ ${event.venue?.name ?? ""}. Entdeckt auf LNUP!`,
                 });
-              } catch {}
+              } catch (e) {
+                console.warn("Share failed:", e);
+              }
             }}
             className="w-10 h-10 rounded-full items-center justify-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
