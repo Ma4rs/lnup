@@ -103,9 +103,18 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
     throw new Error("KI-Antwort wurde wegen Sicherheitsfilter blockiert. Bitte erneut versuchen.");
   }
 
-  const text = candidate.content?.parts
-    ?.map((p: any) => p.text ?? "")
-    .join("") ?? "";
+  const parts = candidate.content?.parts ?? [];
+  const text = parts
+    .map((p: any) => p.text ?? "")
+    .filter((t: string) => t.length > 0)
+    .join("");
+
+  if (!text && parts.length > 0) {
+    console.warn(
+      "[geminiRequest] Parts vorhanden, aber kein Text. Part-Typen:",
+      parts.map((p: any) => Object.keys(p)).flat()
+    );
+  }
 
   const groundingUrls = extractGroundingUrls(candidate);
 
