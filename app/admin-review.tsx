@@ -15,7 +15,7 @@ import { extractEventsFromUrl } from "@/lib/aiScraper";
 import { useToastStore } from "@/stores/toastStore";
 import { formatEventDate, formatTime } from "@/lib/utils";
 import { COLORS } from "@/lib/constants";
-import type { Event } from "@/types";
+
 
 export default function AdminReviewScreen() {
   const insets = useSafeAreaInsets();

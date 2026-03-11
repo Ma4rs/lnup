@@ -54,7 +54,7 @@ export default function EditEventScreen() {
 
   useEffect(() => {
     if (event?.is_private && id) {
-      getEventMembers(id).then(setMembers);
+      getEventMembers(id).then(setMembers).catch((e) => console.warn("getEventMembers failed:", e));
     }
   }, [id, event?.is_private]);
 
@@ -229,49 +229,104 @@ export default function EditEventScreen() {
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Text className="text-sm font-medium text-text-secondary mb-1.5">Datum *</Text>
-              <TouchableOpacity
-                onPress={() => setShowDatePicker(true)}
-                className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
-              >
-                <Text className="text-text-primary text-base">
-                  {eventDate ? format(eventDate, "dd.MM.yyyy", { locale: de }) : "Wählen"}
-                </Text>
-                <Ionicons name="calendar-outline" size={18} color="#6B6B80" />
-              </TouchableOpacity>
+              {Platform.OS === "web" ? (
+                <input
+                  type="date"
+                  value={eventDate ? format(eventDate, "yyyy-MM-dd") : ""}
+                  min={format(new Date(), "yyyy-MM-dd")}
+                  onChange={(e) => {
+                    const val = (e.target as HTMLInputElement).value;
+                    if (val) setEventDate(new Date(val + "T12:00:00"));
+                  }}
+                  style={{
+                    backgroundColor: "var(--color-card, #1A1A2E)",
+                    border: "1px solid var(--color-border, #2A2A3E)",
+                    borderRadius: 12, padding: "12px 16px",
+                    color: "var(--color-text-primary, #FFFFFF)",
+                    fontSize: 16, width: "100%", boxSizing: "border-box",
+                  }}
+                />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <Text className="text-text-primary text-base">
+                    {eventDate ? format(eventDate, "dd.MM.yyyy", { locale: de }) : "Wählen"}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={18} color="#6B6B80" />
+                </TouchableOpacity>
+              )}
             </View>
             <View className="flex-1">
               <Text className="text-sm font-medium text-text-secondary mb-1.5">Von *</Text>
-              <TouchableOpacity
-                onPress={() => setShowTimeStartPicker(true)}
-                className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
-              >
-                <Text className="text-text-primary text-base">
-                  {timeStart ? format(timeStart, "HH:mm") : "HH:MM"}
-                </Text>
-                <Ionicons name="time-outline" size={18} color="#6B6B80" />
-              </TouchableOpacity>
+              {Platform.OS === "web" ? (
+                <input
+                  type="time"
+                  value={timeStart ? format(timeStart, "HH:mm") : ""}
+                  onChange={(e) => {
+                    const val = (e.target as HTMLInputElement).value;
+                    if (val) { const [h, m] = val.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); setTimeStart(d); }
+                  }}
+                  style={{
+                    backgroundColor: "var(--color-card, #1A1A2E)",
+                    border: "1px solid var(--color-border, #2A2A3E)",
+                    borderRadius: 12, padding: "12px 16px",
+                    color: "var(--color-text-primary, #FFFFFF)",
+                    fontSize: 16, width: "100%", boxSizing: "border-box",
+                  }}
+                />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setShowTimeStartPicker(true)}
+                  className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <Text className="text-text-primary text-base">
+                    {timeStart ? format(timeStart, "HH:mm") : "HH:MM"}
+                  </Text>
+                  <Ionicons name="time-outline" size={18} color="#6B6B80" />
+                </TouchableOpacity>
+              )}
             </View>
             <View className="flex-1">
               <Text className="text-sm font-medium text-text-secondary mb-1.5">Bis</Text>
-              <TouchableOpacity
-                onPress={() => setShowTimeEndPicker(true)}
-                className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
-              >
-                <Text className="text-text-primary text-base">
-                  {timeEnd ? format(timeEnd, "HH:mm") : "—"}
-                </Text>
-                <Ionicons name="time-outline" size={18} color="#6B6B80" />
-              </TouchableOpacity>
+              {Platform.OS === "web" ? (
+                <input
+                  type="time"
+                  value={timeEnd ? format(timeEnd, "HH:mm") : ""}
+                  onChange={(e) => {
+                    const val = (e.target as HTMLInputElement).value;
+                    if (val) { const [h, m] = val.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); setTimeEnd(d); }
+                  }}
+                  style={{
+                    backgroundColor: "var(--color-card, #1A1A2E)",
+                    border: "1px solid var(--color-border, #2A2A3E)",
+                    borderRadius: 12, padding: "12px 16px",
+                    color: "var(--color-text-primary, #FFFFFF)",
+                    fontSize: 16, width: "100%", boxSizing: "border-box",
+                  }}
+                />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setShowTimeEndPicker(true)}
+                  className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <Text className="text-text-primary text-base">
+                    {timeEnd ? format(timeEnd, "HH:mm") : "—"}
+                  </Text>
+                  <Ionicons name="time-outline" size={18} color="#6B6B80" />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
-          {showDatePicker && (
+          {Platform.OS !== "web" && showDatePicker && (
             <DateTimePicker value={eventDate ?? new Date()} mode="date" display="default" minimumDate={new Date()} onChange={handleDateChange} />
           )}
-          {showTimeStartPicker && (
+          {Platform.OS !== "web" && showTimeStartPicker && (
             <DateTimePicker value={timeStart ?? new Date()} mode="time" display="default" is24Hour onChange={handleTimeStartChange} />
           )}
-          {showTimeEndPicker && (
+          {Platform.OS !== "web" && showTimeEndPicker && (
             <DateTimePicker value={timeEnd ?? new Date()} mode="time" display="default" is24Hour onChange={handleTimeEndChange} />
           )}
 

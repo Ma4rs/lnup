@@ -17,6 +17,7 @@ export default function UserProfileScreen() {
   const getEventsByCreator = useEventStore((s) => s.getEventsByCreator);
   const [user, setUser] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -50,6 +51,31 @@ export default function UserProfileScreen() {
     loadProfile();
   }, [id]);
 
+  useEffect(() => {
+    if (!user || !user.show_history) return;
+    async function fetchAttended() {
+      const today = new Date().toISOString().split("T")[0];
+      const { data: confirmations } = await supabase
+        .from("event_confirmations")
+        .select("event_id")
+        .eq("user_id", user!.id)
+        .in("status", ["going", "attended"]);
+      if (!confirmations || confirmations.length === 0) return;
+      const eventIds = confirmations.map((c: any) => c.event_id);
+      const { data: events } = await supabase
+        .from("events_with_counts")
+        .select("id, title, event_date, time_start, category, created_by, venues(name, city)")
+        .in("id", eventIds)
+        .lt("event_date", today)
+        .order("event_date", { ascending: false })
+        .limit(10);
+      if (events) {
+        setAttendedEvents(events.filter((e: any) => e.created_by !== user!.id));
+      }
+    }
+    fetchAttended();
+  }, [user?.id, user?.show_history]);
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-background items-center justify-center" style={{ paddingTop: insets.top }}>
@@ -80,32 +106,6 @@ export default function UserProfileScreen() {
   const nextRank = getNextRank(rank.id);
   const progress = getProgressToNextRank(user.trust_score);
   const userEvents = getEventsByCreator(user.id);
-  const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!user.show_history) return;
-    async function fetchAttended() {
-      const today = new Date().toISOString().split("T")[0];
-      const { data: confirmations } = await supabase
-        .from("event_confirmations")
-        .select("event_id")
-        .eq("user_id", user.id)
-        .in("status", ["going", "attended"]);
-      if (!confirmations || confirmations.length === 0) return;
-      const eventIds = confirmations.map((c: any) => c.event_id);
-      const { data: events } = await supabase
-        .from("events_with_counts")
-        .select("id, title, event_date, time_start, category, created_by, venues(name, city)")
-        .in("id", eventIds)
-        .lt("event_date", today)
-        .order("event_date", { ascending: false })
-        .limit(10);
-      if (events) {
-        setAttendedEvents(events.filter((e: any) => e.created_by !== user.id));
-      }
-    }
-    fetchAttended();
-  }, [user.id, user.show_history]);
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>

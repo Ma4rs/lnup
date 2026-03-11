@@ -148,7 +148,7 @@ export default function SettingsScreen() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.email) setEmail(session.user.email);
-    });
+    }).catch(() => {});
   }, []);
 
   const handleLogout = async () => {

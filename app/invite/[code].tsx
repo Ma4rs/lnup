@@ -43,19 +43,21 @@ export default function InviteScreen() {
       return;
     }
 
-    const { data: event } = await supabase
-      .from("events")
-      .select("id, title, event_date, time_start, max_attendees, venues(name)")
-      .eq("invite_code", code.toUpperCase())
-      .eq("is_private", true)
-      .eq("status", "active")
-      .maybeSingle();
+    try {
+      const normalizedCode = String(code).toUpperCase();
+      const { data: event } = await supabase
+        .from("events")
+        .select("id, title, event_date, time_start, max_attendees, venues(name)")
+        .eq("invite_code", normalizedCode)
+        .eq("is_private", true)
+        .eq("status", "active")
+        .maybeSingle();
 
-    if (!event) {
-      setError("Ungültiger oder abgelaufener Einladungscode.");
-      setIsLoading(false);
-      return;
-    }
+      if (!event) {
+        setError("Ungültiger oder abgelaufener Einladungscode.");
+        setIsLoading(false);
+        return;
+      }
 
     const { count } = await supabase
       .from("event_members")
@@ -83,7 +85,12 @@ export default function InviteScreen() {
       member_count: count ?? 0,
       max_attendees: event.max_attendees,
     });
-    setIsLoading(false);
+    } catch (e) {
+      console.warn("loadPreview error:", e);
+      setError("Einladung konnte nicht geladen werden.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function handleJoin() {
@@ -94,11 +101,16 @@ export default function InviteScreen() {
     if (!code) return;
 
     setIsJoining(true);
-    const event = await joinEvent(code);
-    setIsJoining(false);
-
-    if (event) {
-      router.replace(`/event/${event.id}`);
+    try {
+      const event = await joinEvent(code);
+      if (event) {
+        router.replace(`/event/${event.id}`);
+      }
+    } catch (e) {
+      console.warn("handleJoin error:", e);
+      setError("Beitritt fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setIsJoining(false);
     }
   }
 

@@ -67,6 +67,11 @@ async function fetchWithTimeout(url: string): Promise<string | null> {
   }
 }
 
+function safeHostname(url: string): string {
+  try { return new URL(url).hostname; }
+  catch { return url.replace(/^https?:\/\//, "").split("/")[0]; }
+}
+
 async function fetchViaProxy(url: string): Promise<string | null> {
   const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
   try {
@@ -117,7 +122,7 @@ export async function extractEventsFromUrl(url: string): Promise<ExtractedEvent[
 AUFGABE: Besuche die URL über deine Google-Suchfunktion und finde alle Events/Veranstaltungen die dort gelistet sind.
 
 Gehe so vor:
-1. Suche nach "site:${new URL(url).hostname} veranstaltungen events" und ähnlichen Begriffen
+1. Suche nach "site:${safeHostname(url)} veranstaltungen events" und ähnlichen Begriffen
 2. Durchsuche die Ergebnisse nach konkreten Events mit Datum, Uhrzeit, Location
 3. Für jedes gefundene Event: Extrahiere alle verfügbaren Details (Titel, Datum, Uhrzeit, Ort, Preis)
 4. Wenn keine Events gefunden werden, gib [] zurück

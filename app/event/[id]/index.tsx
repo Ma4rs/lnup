@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Share, Alert, FlatList, useWindowDimensions, Linking } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -42,7 +42,7 @@ export default function EventDetailScreen() {
   const [isMemberState, setIsMemberState] = useState(false);
 
   useEffect(() => {
-    if (id) fetchPhotosForEvent(id);
+    if (id) fetchPhotosForEvent(id).catch(() => {});
   }, [id]);
 
   useEffect(() => {

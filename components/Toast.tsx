@@ -11,10 +11,11 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { useToastStore } from "@/stores/toastStore";
 
-const TOAST_CONFIG = {
-  success: { icon: "checkmark-circle" as const, bg: "rgba(0,230,118,0.15)", border: "rgba(0,230,118,0.3)", color: "#00E676" },
-  info: { icon: "information-circle" as const, bg: "rgba(0,210,255,0.15)", border: "rgba(0,210,255,0.3)", color: "#00D2FF" },
-  error: { icon: "alert-circle" as const, bg: "rgba(255,82,82,0.15)", border: "rgba(255,82,82,0.3)", color: "#FF5252" },
+const TOAST_CONFIG: Record<string, { icon: "checkmark-circle" | "information-circle" | "alert-circle" | "warning"; bg: string; border: string; color: string }> = {
+  success: { icon: "checkmark-circle", bg: "rgba(0,230,118,0.15)", border: "rgba(0,230,118,0.3)", color: "#00E676" },
+  info: { icon: "information-circle", bg: "rgba(0,210,255,0.15)", border: "rgba(0,210,255,0.3)", color: "#00D2FF" },
+  warning: { icon: "warning", bg: "rgba(255,193,7,0.15)", border: "rgba(255,193,7,0.3)", color: "#FFC107" },
+  error: { icon: "alert-circle", bg: "rgba(255,82,82,0.15)", border: "rgba(255,82,82,0.3)", color: "#FF5252" },
 };
 
 export function Toast() {
@@ -42,7 +43,7 @@ export function Toast() {
 
   if (!toast) return null;
 
-  const config = TOAST_CONFIG[toast.type];
+  const config = TOAST_CONFIG[toast.type] ?? TOAST_CONFIG.info;
 
   return (
     <Animated.View

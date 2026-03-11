@@ -57,6 +57,11 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
 
   for (const event of events) {
     try {
+      if (!event.title || !event.event_date || !event.source_type) {
+        console.warn("[persistEventsToDb] Skipping event with missing fields:", event.title);
+        failed++;
+        continue;
+      }
       const dedupKey = `${event.title}|${event.event_date}`;
       if (seenKeys.has(dedupKey) || existingSet.has(dedupKey)) continue;
       seenKeys.add(dedupKey);
@@ -372,16 +377,27 @@ export const useEventStore = create<EventState>((set, get) => ({
       ),
     }));
 
-    if (isSaved) {
-      await supabase
-        .from("event_saves")
-        .delete()
-        .eq("event_id", eventId)
-        .eq("user_id", session.user.id);
-    } else {
-      await supabase
-        .from("event_saves")
-        .insert({ event_id: eventId, user_id: session.user.id });
+    const { error: dbError } = isSaved
+      ? await supabase
+          .from("event_saves")
+          .delete()
+          .eq("event_id", eventId)
+          .eq("user_id", session.user.id)
+      : await supabase
+          .from("event_saves")
+          .insert({ event_id: eventId, user_id: session.user.id });
+
+    if (dbError) {
+      console.warn("toggleSave DB error:", dbError.message);
+      set((state) => ({
+        savedEventIds: savedEventIds,
+        events: state.events.map((e) =>
+          e.id === eventId
+            ? { ...e, is_saved: isSaved, saves_count: Math.max(0, e.saves_count + (isSaved ? 1 : -1)) }
+            : e
+        ),
+      }));
+      showError("Speichern fehlgeschlagen.");
     }
   },
 
@@ -416,23 +432,51 @@ export const useEventStore = create<EventState>((set, get) => ({
     }));
 
     if (isGoing) {
-      await supabase
+      const { error: dbError } = await supabase
         .from("event_confirmations")
         .delete()
         .eq("event_id", eventId)
         .eq("user_id", session.user.id);
 
+      if (dbError) {
+        console.warn("toggleGoing DB error:", dbError.message);
+        set((state) => ({
+          goingEventIds: goingEventIds,
+          events: state.events.map((e) =>
+            e.id === eventId
+              ? { ...e, is_going: true, going_count: Math.max(0, e.going_count + 1) }
+              : e
+          ),
+        }));
+        showError("Teilnahme konnte nicht geändert werden.");
+        return;
+      }
+
       const reminderId = get().reminderIds.get(eventId);
       if (reminderId) {
         cancelScheduledNotification(reminderId).catch(() => {});
-        const next = new Map(get().reminderIds);
-        next.delete(eventId);
-        set({ reminderIds: next });
+        const nextReminders = new Map(get().reminderIds);
+        nextReminders.delete(eventId);
+        set({ reminderIds: nextReminders });
       }
     } else {
-      await supabase
+      const { error: dbError } = await supabase
         .from("event_confirmations")
         .insert({ event_id: eventId, user_id: session.user.id, status: "going" });
+
+      if (dbError) {
+        console.warn("toggleGoing DB error:", dbError.message);
+        set((state) => ({
+          goingEventIds: goingEventIds,
+          events: state.events.map((e) =>
+            e.id === eventId
+              ? { ...e, is_going: false, going_count: Math.max(0, e.going_count - 1) }
+              : e
+          ),
+        }));
+        showError("Teilnahme konnte nicht geändert werden.");
+        return;
+      }
 
       const event = get().getEventById(eventId);
       if (event?.event_date && event?.time_start) {
@@ -444,9 +488,9 @@ export const useEventStore = create<EventState>((set, get) => ({
           event.time_start
         ).then((notifId) => {
           if (notifId) {
-            const next = new Map(get().reminderIds);
-            next.set(eventId, notifId);
-            set({ reminderIds: next });
+            const nextReminders = new Map(get().reminderIds);
+            nextReminders.set(eventId, notifId);
+            set({ reminderIds: nextReminders });
           }
         }).catch(() => {});
       }
@@ -463,7 +507,7 @@ export const useEventStore = create<EventState>((set, get) => ({
     set((state) => ({
       events: state.events.map((e) =>
         e.id === eventId
-          ? { ...e, confirmations_count: e.confirmations_count + 1 }
+          ? { ...e, confirmations_count: (e.confirmations_count ?? 0) + 1 }
           : e
       ),
     }));

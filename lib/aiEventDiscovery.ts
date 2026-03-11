@@ -140,7 +140,10 @@ export async function discoverLocalEvents(city: string): Promise<Event[]> {
 
   const sources = getSourcesForCity(city);
   const baseQueries = SEARCH_QUERIES.map((q) => q.replace("{city}", city));
-  const sourceQueries = sources.websites.map((url) => `site:${new URL(url).hostname} events veranstaltungen`);
+  const sourceQueries = sources.websites.map((url) => {
+    try { return `site:${new URL(url).hostname} events veranstaltungen`; }
+    catch { return `${url} events veranstaltungen`; }
+  });
   const instaQueries = sources.instagram.flatMap((handle) => [
     `site:instagram.com ${handle}`,
     `instagram.com/${handle} event party`,

@@ -26,7 +26,7 @@ export default function SavedScreen() {
       setShowAuthGuard(true);
       return;
     }
-    fetchPrivateEvents().then(setPrivateEvents);
+    fetchPrivateEvents().then(setPrivateEvents).catch((e) => console.warn("fetchPrivateEvents failed:", e));
   }, [isAuthenticated]);
 
   const allItems = [

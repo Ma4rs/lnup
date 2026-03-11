@@ -19,6 +19,46 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const getEventsByCreator = useEventStore((s) => s.getEventsByCreator);
+  const [attendedEvents, setAttendedEvents] = useState<Event[]>([]);
+  const [showPastHosted, setShowPastHosted] = useState(false);
+  const [showAttended, setShowAttended] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    async function fetchAttended() {
+      const { data: confirmations } = await supabase
+        .from("event_confirmations")
+        .select("event_id")
+        .eq("user_id", user!.id)
+        .in("status", ["going", "attended"]);
+
+      if (!confirmations || confirmations.length === 0) return;
+
+      const today = new Date().toISOString().split("T")[0];
+      const eventIds = confirmations.map((c: any) => c.event_id);
+      const { data: events } = await supabase
+        .from("events_with_counts")
+        .select("*, venues(*)")
+        .in("id", eventIds)
+        .lt("event_date", today)
+        .order("event_date", { ascending: false });
+
+      if (events) {
+        const filtered = events.filter((e: any) => e.created_by !== user!.id);
+        setAttendedEvents(filtered.map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          event_date: row.event_date,
+          time_start: row.time_start,
+          category: row.category,
+          venue: row.venues ? { name: row.venues.name, city: row.venues.city } : undefined,
+          going_count: row.going_count ?? 0,
+          saves_count: row.saves_count ?? 0,
+        } as any)));
+      }
+    }
+    fetchAttended();
+  }, [user?.id]);
 
   if (isAuthLoading && !user) {
     return (
@@ -55,48 +95,10 @@ export default function ProfileScreen() {
   const nextRank = getNextRank(rank.id);
   const progress = getProgressToNextRank(user.trust_score);
   const myEvents = getEventsByCreator(user.id);
-  const [attendedEvents, setAttendedEvents] = useState<Event[]>([]);
-  const [showPastHosted, setShowPastHosted] = useState(false);
-  const [showAttended, setShowAttended] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
   const activeHosted = myEvents.filter((e) => e.event_date >= today);
   const pastHosted = myEvents.filter((e) => e.event_date < today);
-
-  useEffect(() => {
-    async function fetchAttended() {
-      const { data: confirmations } = await supabase
-        .from("event_confirmations")
-        .select("event_id")
-        .eq("user_id", user.id)
-        .in("status", ["going", "attended"]);
-
-      if (!confirmations || confirmations.length === 0) return;
-
-      const eventIds = confirmations.map((c: any) => c.event_id);
-      const { data: events } = await supabase
-        .from("events_with_counts")
-        .select("*, venues(*)")
-        .in("id", eventIds)
-        .lt("event_date", today)
-        .order("event_date", { ascending: false });
-
-      if (events) {
-        const filtered = events.filter((e: any) => e.created_by !== user.id);
-        setAttendedEvents(filtered.map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          event_date: row.event_date,
-          time_start: row.time_start,
-          category: row.category,
-          venue: row.venues ? { name: row.venues.name, city: row.venues.city } : undefined,
-          going_count: row.going_count ?? 0,
-          saves_count: row.saves_count ?? 0,
-        } as any)));
-      }
-    }
-    fetchAttended();
-  }, [user.id]);
 
   return (
     <ScrollView
