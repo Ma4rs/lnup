@@ -21,14 +21,19 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function prepare() {
-      const [onboarded] = await Promise.all([
-        AsyncStorage.getItem("@lnup_onboarded"),
-        initializeAuth(),
-        initializeTheme(),
-      ]);
-      setNeedsOnboarding(onboarded !== "true");
-      setIsReady(true);
-      SplashScreen.hideAsync();
+      try {
+        const [onboarded] = await Promise.all([
+          AsyncStorage.getItem("@lnup_onboarded"),
+          initializeAuth(),
+          initializeTheme(),
+        ]);
+        setNeedsOnboarding(onboarded !== "true");
+      } catch (e) {
+        console.warn("App init error:", e);
+      } finally {
+        setIsReady(true);
+        SplashScreen.hideAsync();
+      }
     }
     prepare();
   }, []);

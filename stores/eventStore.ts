@@ -348,6 +348,10 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   toggleSave: async (eventId) => {
+    if (eventId.startsWith("ai-") || eventId.startsWith("tm-")) {
+      showError("Dieses Event muss erst gespeichert werden.");
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       showError("Bitte melde dich an, um Events zu speichern.");
@@ -402,6 +406,10 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   toggleGoing: async (eventId) => {
+    if (eventId.startsWith("ai-") || eventId.startsWith("tm-")) {
+      showError("Dieses Event muss erst gespeichert werden.");
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       showError("Bitte melde dich an, um teilzunehmen.");
@@ -498,6 +506,10 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   confirmAttended: async (eventId) => {
+    if (eventId.startsWith("ai-") || eventId.startsWith("tm-")) {
+      showError("Dieses Event muss erst gespeichert werden.");
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       showError("Bitte melde dich an, um Teilnahme zu bestätigen.");
@@ -512,12 +524,24 @@ export const useEventStore = create<EventState>((set, get) => ({
       ),
     }));
 
-    await supabase
+    const { error: dbError } = await supabase
       .from("event_confirmations")
       .upsert(
         { event_id: eventId, user_id: session.user.id, status: "attended" },
         { onConflict: "event_id,user_id" }
       );
+
+    if (dbError) {
+      console.warn("confirmAttended DB error:", dbError.message);
+      set((state) => ({
+        events: state.events.map((e) =>
+          e.id === eventId
+            ? { ...e, confirmations_count: Math.max(0, (e.confirmations_count ?? 0) - 1) }
+            : e
+        ),
+      }));
+      showError("Bestätigung fehlgeschlagen.");
+    }
   },
 
   mergeExternalEvents: (externalEvents) => {
