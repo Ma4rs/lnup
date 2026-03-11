@@ -19,6 +19,8 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const getEventsByCreator = useEventStore((s) => s.getEventsByCreator);
+  const isDark = useThemeStore((s) => s.isDark);
+  const setThemeMode = useThemeStore((s) => s.setMode);
   const [attendedEvents, setAttendedEvents] = useState<Event[]>([]);
   const [showPastHosted, setShowPastHosted] = useState(false);
   const [showAttended, setShowAttended] = useState(false);
@@ -109,14 +111,11 @@ export default function ProfileScreen() {
       {/* Top Icons */}
       <View className="flex-row justify-end px-4 pt-3 gap-2">
         <TouchableOpacity
-          onPress={() => {
-            const { isDark, setMode } = useThemeStore.getState();
-            setMode(isDark ? "light" : "dark");
-          }}
+          onPress={() => setThemeMode(isDark ? "light" : "dark")}
           className="w-10 h-10 rounded-full bg-card border border-border items-center justify-center"
         >
           <Ionicons
-            name={useThemeStore.getState().isDark ? "sunny-outline" : "moon-outline"}
+            name={isDark ? "sunny-outline" : "moon-outline"}
             size={18}
             color="#A0A0B8"
           />
@@ -196,10 +195,10 @@ export default function ProfileScreen() {
           <Text className="text-xs text-text-secondary mt-1">Bestätigt</Text>
         </View>
         <View className="flex-1 bg-card rounded-xl p-4 items-center border border-border">
-          <Text className="text-2xl font-bold text-success">
+          <Text className="text-2xl font-bold text-text-primary">
             {user.reports_count}
           </Text>
-          <Text className="text-xs text-text-secondary mt-1">Reports</Text>
+          <Text className="text-xs text-text-secondary mt-1">Meldungen</Text>
         </View>
       </View>
 

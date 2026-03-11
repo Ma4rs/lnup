@@ -15,8 +15,9 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 function isFreeEvent(priceInfo: string | null | undefined): boolean {
   if (!priceInfo) return false;
-  const lower = priceInfo.toLowerCase();
-  return lower.includes("kostenlos") || lower.includes("frei") || lower === "0" || lower === "0€";
+  const lower = priceInfo.toLowerCase().trim();
+  return lower.includes("kostenlos") || lower.includes("frei") || lower.includes("gratis")
+    || lower.includes("umsonst") || lower.includes("free") || lower === "0" || lower === "0€";
 }
 
 interface EventCardProps {
@@ -28,8 +29,7 @@ interface EventCardProps {
 export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
   const router = useRouter();
   const toggleSave = useEventStore((s) => s.toggleSave);
-  const savedIds = useEventStore((s) => s.savedEventIds);
-  const isSaved = savedIds.has(event.id);
+  const isSaved = useEventStore((s) => s.savedEventIds.has(event.id));
   const lastTap = useRef(0);
   const tapTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [showDoubleTapOverlay, setShowDoubleTapOverlay] = useState(false);

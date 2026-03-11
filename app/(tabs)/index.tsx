@@ -52,16 +52,20 @@ export default function FeedScreen() {
     return events.filter((e) => e.status === "active" && e.event_date >= cutoff);
   }, [events]);
 
-  const filteredEvents = useMemo(() => {
-    const filtered = activeEvents.filter((event) => {
+  const cityDateFiltered = useMemo(() => {
+    return activeEvents.filter((event) => {
       if (city) {
         const eventCity = event.venue?.city;
         if (!eventCity || eventCity.toLowerCase() !== city.toLowerCase()) return false;
       }
-      if (!matchesDateFilter(event.event_date, dateFilter)) return false;
-      if (categoryFilter && event.category !== categoryFilter) return false;
-      return true;
+      return matchesDateFilter(event.event_date, dateFilter);
     });
+  }, [activeEvents, dateFilter, city]);
+
+  const filteredEvents = useMemo(() => {
+    const filtered = categoryFilter
+      ? cityDateFiltered.filter((e) => e.category === categoryFilter)
+      : cityDateFiltered;
 
     return [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -74,20 +78,15 @@ export default function FeedScreen() {
           return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
       }
     });
-  }, [activeEvents, dateFilter, categoryFilter, city, sortBy]);
+  }, [cityDateFiltered, categoryFilter, sortBy]);
 
   const eventCounts = useMemo(() => {
     const counts: Partial<Record<EventCategory, number>> = {};
-    for (const event of activeEvents) {
-      if (city) {
-        const eventCity = event.venue?.city;
-        if (!eventCity || eventCity.toLowerCase() !== city.toLowerCase()) continue;
-      }
-      if (!matchesDateFilter(event.event_date, dateFilter)) continue;
+    for (const event of cityDateFiltered) {
       counts[event.category] = (counts[event.category] ?? 0) + 1;
     }
     return counts;
-  }, [activeEvents, dateFilter, city]);
+  }, [cityDateFiltered]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
