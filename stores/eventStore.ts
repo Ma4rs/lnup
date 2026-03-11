@@ -39,6 +39,9 @@ export async function persistAiEvents(events: Event[]): Promise<{ saved: number;
   return result;
 }
 
+const VALID_SOURCE_TYPES = ["api_ticketmaster", "ai_discovered", "ai_scraped", "platform", "verified_organizer", "verified_user", "community"];
+const VALID_CATEGORIES = ["nightlife", "food_drink", "concert", "festival", "sports", "art", "family", "other"];
+
 async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promise<{ saved: number; failed: number }> {
   const seenKeys = new Set<string>();
   const seenCities = new Set<string>();
@@ -57,7 +60,6 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
 
   for (const event of events) {
     try {
-      const VALID_SOURCE_TYPES = ["api_ticketmaster", "ai_discovered", "ai_scraped", "platform", "verified_organizer", "verified_user", "community"];
       if (!event.title || !event.event_date || !event.source_type) {
         console.warn("[persistEventsToDb] Skipping event with missing fields:", event.title);
         failed++;
@@ -121,7 +123,7 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
         event_date: event.event_date,
         time_start: timeStart,
         time_end: timeEnd,
-        category: ["nightlife", "food_drink", "concert", "festival", "sports", "art", "family", "other"].includes(event.category) ? event.category : "other",
+        category: VALID_CATEGORIES.includes(event.category) ? event.category : "other",
         price_info: event.price_info || null,
         source_type: sourceType,
         source_url: event.source_url || null,

@@ -131,9 +131,11 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
         </Text>
 
         {/* Description */}
-        <Text className="text-sm text-text-secondary mb-3" numberOfLines={2}>
-          {event.description}
-        </Text>
+        {event.description ? (
+          <Text className="text-sm text-text-secondary mb-3" numberOfLines={2}>
+            {event.description}
+          </Text>
+        ) : null}
 
         {/* Details Row */}
         <View className="flex-row items-center flex-wrap gap-3 mb-3">
@@ -175,6 +177,17 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
             )
           )}
         </View>
+
+        {/* Source link for AI events */}
+        {event.source_url && (event.source_type === "ai_discovered" || event.source_type === "ai_scraped") && (
+          <TouchableOpacity
+            onPress={(e) => { e.stopPropagation(); Linking.openURL(event.source_url!); }}
+            className="flex-row items-center gap-1 mb-3"
+          >
+            <Ionicons name="open-outline" size={12} color="#A0A0B8" />
+            <Text className="text-xs text-text-muted underline" numberOfLines={1}>Quelle öffnen</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Footer: Stats + Actions */}
         <View className="flex-row items-center justify-between border-t border-border pt-3">

@@ -99,6 +99,7 @@ export default function EventDetailScreen() {
 
   const isSaved = savedIds.has(event.id);
   const isGoing = goingIds.has(event.id);
+  const isTemporaryEvent = event.id.startsWith("ai-") || event.id.startsWith("tm-");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [y, m, d] = (event.event_date ?? "").split("-").map(Number);
@@ -344,7 +345,15 @@ export default function EventDetailScreen() {
 
           {/* Action Buttons */}
           <View className="gap-3">
-            {isPast ? (
+            {isTemporaryEvent && (
+              <View className="rounded-xl py-3 px-4 bg-warning/10 border border-warning/30 flex-row items-center gap-2">
+                <Ionicons name="information-circle" size={18} color="#FFC107" />
+                <Text className="text-xs text-text-secondary flex-1">
+                  Dieses Event wird gerade gespeichert. Aktualisiere die Seite, um es zu speichern oder teilzunehmen.
+                </Text>
+              </View>
+            )}
+            {!isTemporaryEvent && isPast ? (
               <TouchableOpacity
                 onPress={() => confirmAttended(event.id)}
                 className="rounded-xl py-4 items-center flex-row justify-center gap-2 bg-success/20 border border-success/40"
@@ -352,7 +361,7 @@ export default function EventDetailScreen() {
                 <Ionicons name="checkmark-circle" size={20} color="#00E676" />
                 <Text className="text-success font-bold text-base">War dabei!</Text>
               </TouchableOpacity>
-            ) : (
+            ) : !isTemporaryEvent ? (
               <TouchableOpacity
                 onPress={() => toggleGoing(event.id)}
                 className={`rounded-xl py-4 items-center flex-row justify-center gap-2 ${
@@ -364,19 +373,21 @@ export default function EventDetailScreen() {
                   {isGoing ? `Dabei! (${event.going_count})` : `Bin dabei! (${event.going_count})`}
                 </Text>
               </TouchableOpacity>
-            )}
+            ) : null}
 
-            <TouchableOpacity
-              onPress={() => toggleSave(event.id)}
-              className={`rounded-xl py-4 items-center flex-row justify-center gap-2 ${
-                isSaved ? "bg-card border border-primary" : "bg-primary"
-              }`}
-            >
-              <Ionicons name={isSaved ? "bookmark" : "bookmark-outline"} size={18} color="#FFFFFF" />
-              <Text className="text-white font-bold text-base">
-                {isSaved ? "Gespeichert" : "Event merken"}
-              </Text>
-            </TouchableOpacity>
+            {!isTemporaryEvent && (
+              <TouchableOpacity
+                onPress={() => toggleSave(event.id)}
+                className={`rounded-xl py-4 items-center flex-row justify-center gap-2 ${
+                  isSaved ? "bg-card border border-primary" : "bg-primary"
+                }`}
+              >
+                <Ionicons name={isSaved ? "bookmark" : "bookmark-outline"} size={18} color="#FFFFFF" />
+                <Text className="text-white font-bold text-base">
+                  {isSaved ? "Gespeichert" : "Event merken"}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               onPress={() => setReportVisible(true)}

@@ -102,6 +102,7 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
         try {
           const { saved, failed } = await persistAiEvents(discovered);
           if (saved > 0) {
+            await useEventStore.getState().fetchEvents(undefined, true);
             useToastStore.getState().showToast(
               `${saved} Event${saved !== 1 ? "s" : ""} in ${cityName} gefunden & gespeichert!`,
               "success"

@@ -103,12 +103,12 @@ export default function FeedScreen() {
         mergeExternalEvents(discovered);
         const { saved, failed } = await persistAiEvents(discovered);
         if (saved > 0) {
+          await fetchEvents(city, true);
           useToastStore.getState().showToast(
             `${saved} Event${saved !== 1 ? "s" : ""} in ${city} gefunden & gespeichert!`,
             "success"
           );
-        }
-        if (failed > 0 && saved === 0) {
+        } else if (failed > 0) {
           useToastStore.getState().showToast(
             `${discovered.length} Events gefunden, konnten aber nicht gespeichert werden.`,
             "error"

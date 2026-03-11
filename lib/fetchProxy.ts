@@ -35,12 +35,11 @@ async function fetchDirect(url: string, maxChars = 25000): Promise<string | null
   }
 }
 
-const CUSTOM_PROXY_URL = process.env.EXPO_PUBLIC_PROXY_URL ?? "";
-
 async function fetchViaProxy(url: string, maxChars = 25000): Promise<string | null> {
   const proxies: string[] = [];
-  if (CUSTOM_PROXY_URL) {
-    proxies.push(`${CUSTOM_PROXY_URL}/?url=${encodeURIComponent(url)}`);
+  const customProxy = process.env.EXPO_PUBLIC_PROXY_URL ?? "";
+  if (customProxy) {
+    proxies.push(`${customProxy}/?url=${encodeURIComponent(url)}`);
   }
   proxies.push(
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
