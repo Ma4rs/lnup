@@ -128,7 +128,7 @@ export default function FeedScreen() {
     } finally {
       setIsDiscovering(false);
     }
-  }, [city, isDiscovering, mergeExternalEvents, fetchEvents]);
+  }, [city, isDiscovering, mergeExternalEvents]);
 
   const showDiscoverButton = city && !isLoading && filteredEvents.length === 0;
 

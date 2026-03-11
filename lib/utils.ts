@@ -73,6 +73,7 @@ export function isPastEvent(dateStr: string | null | undefined): boolean {
   }
 }
 
-export function validateEmail(email: string): boolean {
+export function validateEmail(email: string | null | undefined): boolean {
+  if (!email || typeof email !== "string") return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }

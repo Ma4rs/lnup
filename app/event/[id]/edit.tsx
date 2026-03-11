@@ -428,8 +428,10 @@ export default function EditEventScreen() {
                                   text: "Entfernen",
                                   style: "destructive",
                                   onPress: async () => {
-                                    await kickMember(id, member.user_id);
-                                    setMembers((prev) => prev.filter((m) => m.id !== member.id));
+                                    try {
+                                      await kickMember(id, member.user_id);
+                                      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+                                    } catch { /* error toast shown by kickMember */ }
                                   },
                                 },
                               ]
