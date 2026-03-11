@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Modal, Share } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useToastStore } from "@/stores/toastStore";
+import { APP_URL } from "@/lib/constants";
 import * as Linking from "expo-linking";
 import QRCode from "react-native-qrcode-svg";
 
@@ -12,7 +13,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ visible, onClose, inviteCode, eventTitle }: InviteModalProps) {
-  const webUrl = `https://lnup-demo.vercel.app/invite/${inviteCode}`;
+  const webUrl = `${APP_URL}/invite/${inviteCode}`;
 
   const handleShare = async () => {
     try {

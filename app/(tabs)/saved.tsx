@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,6 +20,7 @@ export default function SavedScreen() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [showAuthGuard, setShowAuthGuard] = useState(false);
   const [privateEvents, setPrivateEvents] = useState<Event[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,6 +29,18 @@ export default function SavedScreen() {
     }
     fetchPrivateEvents().then(setPrivateEvents).catch((e) => console.warn("fetchPrivateEvents failed:", e));
   }, [isAuthenticated]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const events = await fetchPrivateEvents();
+      setPrivateEvents(events);
+    } catch (e) {
+      console.warn("refresh failed:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchPrivateEvents]);
 
   const allItems = [
     ...privateEvents.map((e) => ({ ...e, _section: "private" as const })),
@@ -83,6 +96,9 @@ export default function SavedScreen() {
         }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6C5CE7" />
+        }
         ListEmptyComponent={
           <View className="items-center justify-center py-20 px-8">
             <Text className="text-4xl mb-4">📌</Text>

@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow, isThisWeek, isWeekend, parseISO } from "date-fns";
+import { format, isToday, isTomorrow, isThisWeek, isWeekend, parseISO, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateFilter, EventSourceType } from "@/types";
 
@@ -8,6 +8,8 @@ export function formatEventDate(dateStr: string): string {
     if (isNaN(date.getTime())) return dateStr;
     if (isToday(date)) return "Heute";
     if (isTomorrow(date)) return "Morgen";
+    const daysAway = differenceInDays(date, new Date());
+    if (daysAway >= 2 && daysAway <= 6) return `in ${daysAway} Tagen`;
     return format(date, "EEE, d. MMM", { locale: de });
   } catch {
     return dateStr;

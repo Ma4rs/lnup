@@ -34,6 +34,7 @@ export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? ""
 export const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 export const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? process.env.EXPO_GEMINI_API_KEY ?? "";
 export const TICKETMASTER_API_KEY = process.env.EXPO_PUBLIC_TICKETMASTER_API_KEY ?? "";
+export const APP_URL = process.env.EXPO_PUBLIC_APP_URL ?? "https://lnup-demo.vercel.app";
 
 export const REGION_CENTER = {
   latitude: 48.8317,

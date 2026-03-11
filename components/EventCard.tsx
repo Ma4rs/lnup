@@ -222,7 +222,7 @@ export function EventCard({ event, onToggleGoing, isGoing }: EventCardProps) {
                   color={isGoing ? "#00D2FF" : "#A0A0B8"}
                 />
                 <Text className={`text-xs font-medium ${isGoing ? "text-secondary" : "text-text-secondary"}`}>
-                  {isGoing ? "Dabei" : "Bin dabei"}
+                  {isGoing ? "Dabei" : "Bin dabei"}{event.going_count > 0 ? ` (${event.going_count})` : ""}
                 </Text>
               </TouchableOpacity>
             )}

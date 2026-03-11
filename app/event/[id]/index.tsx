@@ -18,6 +18,7 @@ import { ReportModal } from "@/components/ReportModal";
 import { InviteModal } from "@/components/InviteModal";
 import { formatEventDate, formatTime } from "@/lib/utils";
 import { getCategoryLabel, getCategoryIcon, getCategoryGradient } from "@/lib/categories";
+import { APP_URL } from "@/lib/constants";
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -158,7 +159,8 @@ export default function EventDetailScreen() {
             onPress={async () => {
               try {
                 await Share.share({
-                  message: `${event.title} — ${formatEventDate(event.event_date)}, ${formatTime(event.time_start)} Uhr @ ${event.venue?.name ?? ""}. Entdeckt auf LNUP!`,
+                  title: event.title,
+                  message: `${event.title} — ${formatEventDate(event.event_date)}, ${formatTime(event.time_start)} Uhr @ ${event.venue?.name ?? ""}.\n\n${APP_URL}/event/${event.id}`,
                 });
               } catch (e) {
                 console.warn("Share failed:", e);
