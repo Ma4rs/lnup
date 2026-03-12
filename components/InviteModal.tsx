@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, Share } from "react-native";
+import { View, Text, TouchableOpacity, Modal, Share, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useToastStore } from "@/stores/toastStore";
 import { APP_URL } from "@/lib/constants";
@@ -27,7 +27,12 @@ export function InviteModal({ visible, onClose, inviteCode, eventTitle }: Invite
 
   const handleCopyCode = async () => {
     try {
-      await Share.share({ message: inviteCode });
+      if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteCode);
+        useToastStore.getState().showToast("Code kopiert!", "success");
+      } else {
+        await Share.share({ message: inviteCode });
+      }
     } catch (e) {
       if (__DEV__) console.warn("Copy code failed:", e);
     }
@@ -52,7 +57,7 @@ export function InviteModal({ visible, onClose, inviteCode, eventTitle }: Invite
             <TouchableOpacity onPress={handleCopyCode}>
               <Text className="text-3xl font-black text-primary tracking-widest">{inviteCode}</Text>
             </TouchableOpacity>
-            <Text className="text-xs text-text-muted mt-1">Tippen zum Teilen</Text>
+            <Text className="text-xs text-text-muted mt-1">Tippen zum Kopieren</Text>
           </View>
 
           <View className="gap-3">
