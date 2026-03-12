@@ -53,7 +53,7 @@ export default function EventDetailScreen() {
         id ? fetchPhotosForEvent(id) : Promise.resolve(),
       ]);
     } catch (e) {
-      console.warn("Refresh failed:", e);
+      if (__DEV__) console.warn("Refresh failed:", e);
     } finally {
       setRefreshing(false);
     }
