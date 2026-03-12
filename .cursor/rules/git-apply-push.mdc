@@ -1,0 +1,14 @@
+---
+description: Agents must apply changes and push to git when done
+alwaysApply: true
+---
+
+# Git Apply & Push
+
+When you complete work that modifies files:
+
+1. **Apply** all edits (accept incoming changes from background agents if present)
+2. **Commit** with a descriptive message: `git add -A && git commit -m "..."`
+3. **Push** to remote: `git push origin main`
+
+Do not leave changes uncommitted or unpushed when the task is finished.
