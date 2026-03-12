@@ -51,7 +51,7 @@ export function PhotoUpload({ eventId }: PhotoUploadProps) {
       setPreviewUri(null);
       showToast("Foto eingereicht — wartet auf Freigabe", "success");
     } catch (e) {
-      console.warn("Photo upload failed:", e);
+      if (__DEV__) console.warn("Photo upload failed:", e);
       showToast("Foto konnte nicht hochgeladen werden.", "error");
     } finally {
       setUploading(false);

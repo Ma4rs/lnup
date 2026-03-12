@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,39 +25,47 @@ export default function ProfileScreen() {
   const [attendedEvents, setAttendedEvents] = useState<Event[]>([]);
   const [showPastHosted, setShowPastHosted] = useState(false);
   const [showAttended, setShowAttended] = useState(false);
+  const [loadingAttended, setLoadingAttended] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     async function fetchAttended() {
-      const { data: confirmations } = await supabase
-        .from("event_confirmations")
-        .select("event_id")
-        .eq("user_id", user!.id)
-        .in("status", ["going", "attended"]);
+      setLoadingAttended(true);
+      try {
+        const { data: confirmations } = await supabase
+          .from("event_confirmations")
+          .select("event_id")
+          .eq("user_id", user!.id)
+          .in("status", ["going", "attended"]);
 
-      if (!confirmations || confirmations.length === 0) return;
+        if (!confirmations || confirmations.length === 0) return;
 
-      const today = new Date().toISOString().split("T")[0];
-      const eventIds = confirmations.map((c: any) => c.event_id);
-      const { data: events } = await supabase
-        .from("events_with_counts")
-        .select("*, venues(*)")
-        .in("id", eventIds)
-        .lt("event_date", today)
-        .order("event_date", { ascending: false });
+        const today = new Date().toISOString().split("T")[0];
+        const eventIds = confirmations.map((c: any) => c.event_id);
+        const { data: events } = await supabase
+          .from("events_with_counts")
+          .select("*, venues(*)")
+          .in("id", eventIds)
+          .lt("event_date", today)
+          .order("event_date", { ascending: false });
 
-      if (events) {
-        const filtered = events.filter((e: any) => e.created_by !== user!.id);
-        setAttendedEvents(filtered.map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          event_date: row.event_date,
-          time_start: row.time_start,
-          category: row.category,
-          venue: row.venues ? { name: row.venues.name, city: row.venues.city } : undefined,
-          going_count: row.going_count ?? 0,
-          saves_count: row.saves_count ?? 0,
-        } as any)));
+        if (events) {
+          const filtered = events.filter((e: any) => e.created_by !== user!.id);
+          setAttendedEvents(filtered.map((row: any) => ({
+            id: row.id,
+            title: row.title,
+            event_date: row.event_date,
+            time_start: row.time_start,
+            category: row.category,
+            venue: row.venues ? { name: row.venues.name, city: row.venues.city } : undefined,
+            going_count: row.going_count ?? 0,
+            saves_count: row.saves_count ?? 0,
+          } as any)));
+        }
+      } catch (e) {
+        if (__DEV__) console.warn("fetchAttended failed:", e);
+      } finally {
+        setLoadingAttended(false);
       }
     }
     fetchAttended();
@@ -272,7 +280,11 @@ export default function ProfileScreen() {
         <Text className="text-sm font-semibold text-text-primary mb-3">
           Dabei gewesen
         </Text>
-        {attendedEvents.length === 0 ? (
+        {loadingAttended ? (
+          <View className="bg-card rounded-xl border border-border p-6 items-center">
+            <ActivityIndicator size="small" color="#6C5CE7" />
+          </View>
+        ) : attendedEvents.length === 0 ? (
           <View className="bg-card rounded-xl border border-border p-6 items-center">
             <Ionicons name="calendar-outline" size={28} color="#A0A0B8" />
             <Text className="text-xs text-text-muted mt-2">

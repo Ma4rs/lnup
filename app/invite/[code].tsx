@@ -86,7 +86,7 @@ export default function InviteScreen() {
       max_attendees: event.max_attendees,
     });
     } catch (e) {
-      console.warn("loadPreview error:", e);
+      if (__DEV__) console.warn("loadPreview error:", e);
       setError("Einladung konnte nicht geladen werden.");
     } finally {
       setIsLoading(false);
@@ -107,7 +107,7 @@ export default function InviteScreen() {
         router.replace(`/event/${event.id}`);
       }
     } catch (e) {
-      console.warn("handleJoin error:", e);
+      if (__DEV__) console.warn("handleJoin error:", e);
       setError("Beitritt fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setIsJoining(false);

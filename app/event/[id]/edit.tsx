@@ -54,7 +54,7 @@ export default function EditEventScreen() {
 
   useEffect(() => {
     if (event?.is_private && id) {
-      getEventMembers(id).then(setMembers).catch((e) => console.warn("getEventMembers failed:", e));
+      getEventMembers(id).then(setMembers).catch((e) => { if (__DEV__) console.warn("getEventMembers failed:", e); });
     }
   }, [id, event?.is_private]);
 

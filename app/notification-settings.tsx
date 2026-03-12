@@ -65,7 +65,7 @@ export default function NotificationSettingsScreen() {
 
   useEffect(() => {
     loadPreferences();
-  }, []);
+  }, [user]);
 
   async function loadPreferences() {
     if (!user) {
@@ -97,7 +97,7 @@ export default function NotificationSettingsScreen() {
 
       setPushEnabled((tokenData?.length ?? 0) > 0);
     } catch (e) {
-      console.warn("loadPreferences error:", e);
+      if (__DEV__) console.warn("loadPreferences error:", e);
       useToastStore.getState().showToast("Einstellungen konnten nicht geladen werden.", "error");
     } finally {
       setIsLoading(false);
@@ -117,7 +117,7 @@ export default function NotificationSettingsScreen() {
     );
 
     if (error) {
-      console.warn("updatePref error:", error.message);
+      if (__DEV__) console.warn("updatePref error:", error.message);
       setPrefs(previous);
       useToastStore.getState().showToast("Einstellung konnte nicht gespeichert werden.", "error");
     }
@@ -145,7 +145,7 @@ export default function NotificationSettingsScreen() {
         }
       }
     } catch (e) {
-      console.warn("handleTogglePush error:", e);
+      if (__DEV__) console.warn("handleTogglePush error:", e);
       useToastStore.getState().showToast("Fehler bei Push-Einstellungen.", "error");
     }
   }

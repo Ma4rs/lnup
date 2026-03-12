@@ -21,7 +21,7 @@ export function InviteModal({ visible, onClose, inviteCode, eventTitle }: Invite
         message: `Du bist eingeladen: ${eventTitle}\n\nTritt bei mit Code: ${inviteCode}\nOder öffne: ${webUrl}`,
       });
     } catch (e) {
-      console.warn("Share failed:", e);
+      if (__DEV__) console.warn("Share failed:", e);
     }
   };
 
@@ -29,7 +29,7 @@ export function InviteModal({ visible, onClose, inviteCode, eventTitle }: Invite
     try {
       await Share.share({ message: inviteCode });
     } catch (e) {
-      console.warn("Copy code failed:", e);
+      if (__DEV__) console.warn("Copy code failed:", e);
     }
   };
 

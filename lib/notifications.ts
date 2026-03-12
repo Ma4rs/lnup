@@ -14,7 +14,7 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotifications(): Promise<string | null> {
   try {
     if (!Device.isDevice) {
-      console.warn("Push notifications require a physical device");
+      if (__DEV__) console.warn("Push notifications require a physical device");
       return null;
     }
 
@@ -41,7 +41,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     const tokenData = await Notifications.getExpoPushTokenAsync();
     return tokenData.data;
   } catch (e) {
-    console.warn("registerForPushNotifications error:", e);
+    if (__DEV__) console.warn("registerForPushNotifications error:", e);
     return null;
   }
 }
@@ -59,9 +59,9 @@ export async function savePushToken(token: string): Promise<void> {
       },
       { onConflict: "user_id,token" }
     );
-    if (error) console.warn("savePushToken error:", error.message);
+    if (error && __DEV__) console.warn("savePushToken error:", error.message);
   } catch (e) {
-    console.warn("savePushToken failed:", e);
+    if (__DEV__) console.warn("savePushToken failed:", e);
   }
 }
 
@@ -76,7 +76,7 @@ export async function removePushToken(token: string): Promise<void> {
       .eq("user_id", session.user.id)
       .eq("token", token);
   } catch (e) {
-    console.warn("removePushToken failed:", e);
+    if (__DEV__) console.warn("removePushToken failed:", e);
   }
 }
 
@@ -115,7 +115,7 @@ export async function scheduleEventReminder(
 
     return id;
   } catch (e) {
-    console.warn("scheduleEventReminder error:", e);
+    if (__DEV__) console.warn("scheduleEventReminder error:", e);
     return null;
   }
 }
@@ -124,6 +124,6 @@ export async function cancelScheduledNotification(notificationId: string): Promi
   try {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
   } catch (e) {
-    console.warn("cancelScheduledNotification error:", e);
+    if (__DEV__) console.warn("cancelScheduledNotification error:", e);
   }
 }

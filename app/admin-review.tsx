@@ -39,9 +39,9 @@ export default function AdminReviewScreen() {
         .order("created_at", { ascending: false });
 
       if (!error && data) setEvents(data);
-      else if (error) console.warn("loadPendingEvents error:", error.message);
+      else if (error && __DEV__) console.warn("loadPendingEvents error:", error.message);
     } catch (e) {
-      console.warn("loadPendingEvents failed:", e);
+      if (__DEV__) console.warn("loadPendingEvents failed:", e);
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +159,7 @@ export default function AdminReviewScreen() {
             .update({ last_scraped: new Date().toISOString() })
             .eq("id", source.id);
         } catch (err) {
-          console.warn(`Scrape failed for ${source.url}:`, err);
+          if (__DEV__) console.warn(`Scrape failed for ${source.url}:`, err);
         }
       }
 

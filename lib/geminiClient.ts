@@ -62,12 +62,12 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
     if (response.ok) break;
 
     const errorBody = await response.text().catch(() => "");
-    console.warn(`Gemini API error ${response.status}:`, errorBody);
+    if (__DEV__) console.warn(`Gemini API error ${response.status}:`, errorBody);
 
     const retryable = response.status === 429 || response.status === 503;
     if (retryable && attempt < MAX_RETRIES) {
       const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-      console.warn(`Gemini ${response.status}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);
+      if (__DEV__) console.warn(`Gemini ${response.status}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
       continue;
     }
@@ -90,16 +90,16 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
   if (!candidate) {
     const blockReason = result?.promptFeedback?.blockReason;
     if (blockReason) {
-      console.warn("Gemini blocked:", blockReason);
+      if (__DEV__) console.warn("Gemini blocked:", blockReason);
       throw new Error(`KI-Anfrage wurde blockiert (${blockReason}). Bitte andere Suchbegriffe versuchen.`);
     }
-    console.warn("Gemini: No candidates in response", JSON.stringify(result).substring(0, 500));
+    if (__DEV__) console.warn("Gemini: No candidates in response", JSON.stringify(result).substring(0, 500));
     return { text: "", groundingUrls: [] };
   }
 
   const finishReason = candidate.finishReason;
   if (finishReason === "SAFETY") {
-    console.warn("Gemini: Response blocked by safety filter");
+    if (__DEV__) console.warn("Gemini: Response blocked by safety filter");
     throw new Error("KI-Antwort wurde wegen Sicherheitsfilter blockiert. Bitte erneut versuchen.");
   }
 
@@ -110,7 +110,7 @@ export async function geminiRequest(options: GeminiRequestOptions): Promise<Gemi
     .join("");
 
   if (!text && parts.length > 0) {
-    console.warn(
+    if (__DEV__) console.warn(
       "[geminiRequest] Parts vorhanden, aber kein Text. Part-Typen:",
       parts.map((p: any) => Object.keys(p)).flat()
     );

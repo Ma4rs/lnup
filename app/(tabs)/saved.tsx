@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,13 +21,18 @@ export default function SavedScreen() {
   const [showAuthGuard, setShowAuthGuard] = useState(false);
   const [privateEvents, setPrivateEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       setShowAuthGuard(true);
       return;
     }
-    fetchPrivateEvents().then(setPrivateEvents).catch((e) => console.warn("fetchPrivateEvents failed:", e));
+    setLoading(true);
+    fetchPrivateEvents()
+      .then(setPrivateEvents)
+      .catch((e) => { if (__DEV__) console.warn("fetchPrivateEvents failed:", e); })
+      .finally(() => setLoading(false));
   }, [isAuthenticated]);
 
   const onRefresh = useCallback(async () => {
@@ -36,7 +41,7 @@ export default function SavedScreen() {
       const events = await fetchPrivateEvents();
       setPrivateEvents(events);
     } catch (e) {
-      console.warn("refresh failed:", e);
+      if (__DEV__) console.warn("refresh failed:", e);
     } finally {
       setRefreshing(false);
     }
@@ -100,21 +105,27 @@ export default function SavedScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6C5CE7" />
         }
         ListEmptyComponent={
-          <View className="items-center justify-center py-20 px-8">
-            <Text className="text-4xl mb-4">📌</Text>
-            <Text className="text-lg font-semibold text-text-primary text-center mb-2">
-              Noch keine Events gemerkt
-            </Text>
-            <Text className="text-sm text-text-secondary text-center mb-6">
-              Tippe auf "Merken" bei einem Event, oder tritt einem privaten Event bei.
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/join-event")}
-              className="bg-primary rounded-xl py-3 px-6"
-            >
-              <Text className="text-white font-bold text-sm">Code eingeben</Text>
-            </TouchableOpacity>
-          </View>
+          loading ? (
+            <View className="items-center justify-center py-20">
+              <ActivityIndicator size="large" color="#6C5CE7" />
+            </View>
+          ) : (
+            <View className="items-center justify-center py-20 px-8">
+              <Text className="text-4xl mb-4">📌</Text>
+              <Text className="text-lg font-semibold text-text-primary text-center mb-2">
+                Noch keine Events gemerkt
+              </Text>
+              <Text className="text-sm text-text-secondary text-center mb-6">
+                Tippe auf "Merken" bei einem Event, oder tritt einem privaten Event bei.
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/join-event")}
+                className="bg-primary rounded-xl py-3 px-6"
+              >
+                <Text className="text-white font-bold text-sm">Code eingeben</Text>
+              </TouchableOpacity>
+            </View>
+          )
         }
       />
 

@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useEventStore } from "@/stores/eventStore";
 import { useFilterStore } from "@/stores/filterStore";
+import { useToastStore } from "@/stores/toastStore";
 import { supabase } from "@/lib/supabase";
 import { getRankForScore } from "@/lib/ranks";
 import { formatEventDate, formatTime } from "@/lib/utils";
@@ -121,45 +123,56 @@ export function SearchOverlay({ visible, onClose }: SearchOverlayProps) {
   const q = query.toLowerCase().trim();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
+  const [loadingResults, setLoadingResults] = useState(false);
 
   useEffect(() => {
     if (!q) {
       setVenues([]);
       setUsers([]);
+      setLoadingResults(false);
       return;
     }
+    setLoadingResults(true);
     const timeout = setTimeout(async () => {
-      const [venueRes, userRes] = await Promise.all([
-        supabase
-          .from("venues")
-          .select("*")
-          .or(`name.ilike.%${q}%,address.ilike.%${q}%`)
-          .limit(20),
-        supabase
-          .from("profiles_with_stats")
-          .select("*")
-          .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
-          .limit(20),
-      ]);
-      setVenues(venueRes.data ?? []);
-      setUsers(
-        (userRes.data ?? []).map((row: any) => ({
-          id: row.id,
-          username: row.username,
-          display_name: row.display_name,
-          avatar_url: row.avatar_url,
-          bio: row.bio ?? null,
-          role: row.role,
-          trust_score: row.trust_score,
-          rank: (row.rank ?? getRankForScore(row.trust_score).id) as RankId,
-          email_verified: row.email_verified,
-          phone_verified: row.phone_verified,
-          created_at: row.created_at,
-          events_posted: row.events_posted ?? 0,
-          events_confirmed: row.events_confirmed ?? 0,
-          reports_count: row.reports_count ?? 0,
-        }))
-      );
+      try {
+        const [venueRes, userRes] = await Promise.all([
+          supabase
+            .from("venues")
+            .select("*")
+            .or(`name.ilike.%${q}%,address.ilike.%${q}%`)
+            .limit(20),
+          supabase
+            .from("profiles_with_stats")
+            .select("*")
+            .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+            .limit(20),
+        ]);
+        setVenues(venueRes.data ?? []);
+        setUsers(
+          (userRes.data ?? []).map((row: any) => ({
+            id: row.id,
+            username: row.username,
+            display_name: row.display_name,
+            avatar_url: row.avatar_url,
+            bio: row.bio ?? null,
+            role: row.role,
+            trust_score: row.trust_score,
+            rank: (row.rank ?? getRankForScore(row.trust_score).id) as RankId,
+            email_verified: row.email_verified,
+            phone_verified: row.phone_verified,
+            created_at: row.created_at,
+            events_posted: row.events_posted ?? 0,
+            events_confirmed: row.events_confirmed ?? 0,
+            reports_count: row.reports_count ?? 0,
+          }))
+        );
+      } catch (e) {
+        if (__DEV__) console.warn("Search failed:", e);
+        setVenues([]);
+        setUsers([]);
+      } finally {
+        setLoadingResults(false);
+      }
     }, 300);
     return () => clearTimeout(timeout);
   }, [q]);
@@ -215,7 +228,7 @@ export function SearchOverlay({ visible, onClose }: SearchOverlayProps) {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Events, Venues, Nutzer suchen..."
+              placeholder="Events, Orte, Nutzer suchen..."
               placeholderTextColor={COLORS.textMuted}
               autoFocus
               className="flex-1 py-3 text-text-primary text-base"
@@ -260,6 +273,10 @@ export function SearchOverlay({ visible, onClose }: SearchOverlayProps) {
               Gib einen Suchbegriff ein
             </Text>
           </View>
+        ) : loadingResults ? (
+          <View className="items-center justify-center py-20">
+            <ActivityIndicator size="small" color="#6C5CE7" />
+          </View>
         ) : activeTab === "events" ? (
           <FlatList
             data={filteredEvents}
@@ -280,7 +297,10 @@ export function SearchOverlay({ visible, onClose }: SearchOverlayProps) {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <VenueRow venue={item} onPress={() => {
-                if (item.city) useFilterStore.getState().setCity(item.city);
+                if (item.city) {
+                  useFilterStore.getState().setCity(item.city);
+                  useToastStore.getState().showToast("Filter auf " + item.city + " gesetzt", "success");
+                }
                 handleClose();
               }} />
             )}

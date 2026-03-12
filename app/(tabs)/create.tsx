@@ -286,12 +286,12 @@ export default function CreateEventScreen() {
           {/* Venue */}
           <View>
             <Text className="text-sm font-medium text-text-secondary mb-1.5">
-              Location *
+              Veranstaltungsort *
             </Text>
             <TextInput
               value={venueName}
               onChangeText={setVenueName}
-              placeholder="Name der Location"
+              placeholder="Name des Veranstaltungsorts"
               placeholderTextColor={COLORS.textMuted}
               className="bg-card border border-border rounded-xl px-4 py-3 text-text-primary text-base mb-2"
             />
@@ -386,7 +386,7 @@ export default function CreateEventScreen() {
                   className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
                 >
                   <Text className={timeStart ? "text-text-primary text-base" : "text-text-muted text-base"}>
-                    {timeStart ? format(timeStart, "HH:mm") : "HH:MM"}
+                    {timeStart ? format(timeStart, "HH:mm") : "Uhrzeit"}
                   </Text>
                   <Ionicons name="time-outline" size={18} color="#6B6B80" />
                 </TouchableOpacity>
@@ -426,7 +426,7 @@ export default function CreateEventScreen() {
                   className="bg-card border border-border rounded-xl px-4 py-3 flex-row items-center justify-between"
                 >
                   <Text className={timeEnd ? "text-text-primary text-base" : "text-text-muted text-base"}>
-                    {timeEnd ? format(timeEnd, "HH:mm") : "HH:MM"}
+                    {timeEnd ? format(timeEnd, "HH:mm") : "Uhrzeit"}
                   </Text>
                   <Ionicons name="time-outline" size={18} color="#6B6B80" />
                 </TouchableOpacity>

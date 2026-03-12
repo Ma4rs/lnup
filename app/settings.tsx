@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore, type ThemeMode } from "@/stores/themeStore";
 import { supabase } from "@/lib/supabase";
+import { useToastStore } from "@/stores/toastStore";
 import { COLORS } from "@/lib/constants";
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -111,7 +112,12 @@ function HistoryToggle() {
     const next = !showHistory;
     setShowHistory(next);
     if (user) {
-      await supabase.from("profiles").update({ show_history: next }).eq("id", user.id);
+      const { error } = await supabase.from("profiles").update({ show_history: next }).eq("id", user.id);
+      if (error) {
+        setShowHistory(!next);
+        useToastStore.getState().showToast("Einstellung konnte nicht gespeichert werden.", "error");
+        if (__DEV__) console.warn("History toggle error:", error.message);
+      }
     }
   };
 
@@ -149,7 +155,7 @@ export default function SettingsScreen() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.email) setEmail(session.user.email);
-    }).catch(() => {});
+    }).catch((e) => { if (__DEV__) console.warn('getSession failed:', e); });
   }, []);
 
   const handleLogout = async () => {

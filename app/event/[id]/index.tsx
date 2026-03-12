@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Share, Alert, FlatList, useWindowDimensions, Linking } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Share, Alert, FlatList, useWindowDimensions, Linking, RefreshControl } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -42,6 +42,22 @@ export default function EventDetailScreen() {
   const currentUser = useAuthStore((s) => s.user);
   const [isMemberChecked, setIsMemberChecked] = useState(false);
   const [isMemberState, setIsMemberState] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const fetchEvents = useEventStore((s) => s.fetchEvents);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchEvents(undefined, true),
+        id ? fetchPhotosForEvent(id) : Promise.resolve(),
+      ]);
+    } catch (e) {
+      console.warn("Refresh failed:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchEvents, fetchPhotosForEvent, id]);
 
   useEffect(() => {
     if (id) fetchPhotosForEvent(id).catch(() => {});
@@ -165,7 +181,7 @@ export default function EventDetailScreen() {
                   message: `${event.title} — ${formatEventDate(event.event_date)}, ${formatTime(event.time_start)} Uhr @ ${event.venue?.name ?? ""}.\n\n${APP_URL}/event/${event.id}`,
                 });
               } catch (e) {
-                console.warn("Share failed:", e);
+                if (__DEV__) console.warn("Share failed:", e);
               }
             }}
             className="w-10 h-10 rounded-full items-center justify-center"
@@ -176,7 +192,13 @@ export default function EventDetailScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6C5CE7" />
+        }
+      >
         {event.images && event.images.length > 1 ? (() => {
           const [catColor] = getCategoryGradient(event.category);
           const carouselHeight = Math.round(contentWidth * 9 / 16);
@@ -256,7 +278,17 @@ export default function EventDetailScreen() {
 
           {/* Info Cards */}
           <View className="gap-3 mb-6">
-            <View className="bg-card rounded-xl border border-border p-4 flex-row items-center gap-3">
+            <TouchableOpacity
+              onPress={() => {
+                if (event.venue?.lat && event.venue?.lng) {
+                  Linking.openURL(`https://maps.google.com/maps?q=${event.venue.lat},${event.venue.lng}`);
+                } else if (event.venue?.name) {
+                  Linking.openURL(`https://maps.google.com/maps?q=${encodeURIComponent(event.venue.name)}`);
+                }
+              }}
+              activeOpacity={0.7}
+              className="bg-card rounded-xl border border-border p-4 flex-row items-center gap-3"
+            >
               <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
                 <Ionicons name="location" size={20} color="#6C5CE7" />
               </View>
@@ -265,7 +297,7 @@ export default function EventDetailScreen() {
                 <Text className="text-xs text-text-secondary">{[event.venue?.address, event.venue?.city].filter(Boolean).join(", ")}</Text>
               </View>
               <Ionicons name="navigate-outline" size={18} color="#A0A0B8" />
-            </View>
+            </TouchableOpacity>
 
             <View className="bg-card rounded-xl border border-border p-4 flex-row items-center gap-3">
               <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
@@ -353,7 +385,7 @@ export default function EventDetailScreen() {
               <View className="rounded-xl py-3 px-4 bg-warning/10 border border-warning/30 flex-row items-center gap-2">
                 <Ionicons name="information-circle" size={18} color="#FFC107" />
                 <Text className="text-xs text-text-secondary flex-1">
-                  Dieses Event wird gerade gespeichert. Aktualisiere die Seite, um es zu speichern oder teilzunehmen.
+                  Dieses Event wird gerade gespeichert. Ziehe zum Aktualisieren, um es zu speichern oder teilzunehmen.
                 </Text>
               </View>
             )}

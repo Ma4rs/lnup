@@ -61,7 +61,7 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
   for (const event of events) {
     try {
       if (!event.title || !event.event_date || !event.source_type) {
-        console.warn("[persistEventsToDb] Skipping event with missing fields:", event.title);
+        if (__DEV__) console.warn("[persistEventsToDb] Skipping event with missing fields:", event.title);
         failed++;
         continue;
       }
@@ -107,7 +107,7 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
             .select("id")
             .single();
           if (venueErr) {
-            console.warn("[persistEventsToDb] Venue insert failed:", venueErr.message, venueName);
+            if (__DEV__) console.warn("[persistEventsToDb] Venue insert failed:", venueErr.message, venueName);
             continue;
           }
           venueId = newVenue?.id ?? null;
@@ -132,13 +132,13 @@ async function persistEventsToDb(events: Event[], sourceTypes: string[]): Promis
         image_url: event.image_url,
       });
       if (eventErr) {
-        console.warn("[persistEventsToDb] Event insert failed:", eventErr.message, event.title);
+        if (__DEV__) console.warn("[persistEventsToDb] Event insert failed:", eventErr.message, event.title);
         failed++;
       } else {
         saved++;
       }
     } catch (e) {
-      console.warn("[persistEventsToDb]", e);
+      if (__DEV__) console.warn("[persistEventsToDb]", e);
       failed++;
     }
   }
@@ -295,14 +295,14 @@ export const useEventStore = create<EventState>((set, get) => ({
           .order("event_date", { ascending: true }),
         shouldFetchTM
           ? fetchExternalEvents(city || "").catch((err) => {
-              console.warn("External event fetch failed:", err);
+              if (__DEV__) console.warn("External event fetch failed:", err);
               return [] as Event[];
             })
           : Promise.resolve([] as Event[]),
       ]);
 
       if (dbResult.error) {
-        console.warn("Supabase event fetch error:", dbResult.error.message);
+        if (__DEV__) console.warn("Supabase event fetch error:", dbResult.error.message);
         showError("Events konnten nicht geladen werden.");
         set({ isLoading: false });
         return;
@@ -334,7 +334,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         allEvents = [...dbEvents, ...newTmEvents];
 
         persistExternalEvents(tmEvents).catch((err) =>
-          console.warn("Persist failed:", err)
+          { if (__DEV__) console.warn("Persist failed:", err); }
         );
       }
 
@@ -345,7 +345,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         ...(shouldFetchTM ? { lastFetchTimestamp: now } : {}),
       });
     } catch (error) {
-      console.warn("Event fetch failed:", error);
+      if (__DEV__) console.warn("Event fetch failed:", error);
       showError("Verbindungsfehler. Bitte prüfe deine Internetverbindung.");
     } finally {
       set({ isLoading: false });
@@ -397,7 +397,7 @@ export const useEventStore = create<EventState>((set, get) => ({
           .insert({ event_id: eventId, user_id: session.user.id });
 
     if (dbError) {
-      console.warn("toggleSave DB error:", dbError.message);
+      if (__DEV__) console.warn("toggleSave DB error:", dbError.message);
       set((state) => ({
         savedEventIds: savedEventIds,
         events: state.events.map((e) =>
@@ -452,7 +452,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         .eq("user_id", session.user.id);
 
       if (dbError) {
-        console.warn("toggleGoing DB error:", dbError.message);
+        if (__DEV__) console.warn("toggleGoing DB error:", dbError.message);
         set((state) => ({
           goingEventIds: goingEventIds,
           events: state.events.map((e) =>
@@ -478,7 +478,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         .insert({ event_id: eventId, user_id: session.user.id, status: "going" });
 
       if (dbError) {
-        console.warn("toggleGoing DB error:", dbError.message);
+        if (__DEV__) console.warn("toggleGoing DB error:", dbError.message);
         set((state) => ({
           goingEventIds: goingEventIds,
           events: state.events.map((e) =>
@@ -537,7 +537,7 @@ export const useEventStore = create<EventState>((set, get) => ({
       );
 
     if (dbError) {
-      console.warn("confirmAttended DB error:", dbError.message);
+      if (__DEV__) console.warn("confirmAttended DB error:", dbError.message);
       set((state) => ({
         events: state.events.map((e) =>
           e.id === eventId
@@ -645,7 +645,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         return { photos: [...otherPhotos, ...photos] };
       });
     } catch (error) {
-      console.warn("Photo fetch failed:", error);
+      if (__DEV__) console.warn("Photo fetch failed:", error);
     }
   },
 
@@ -660,7 +660,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         .upload(fileName, blob, { contentType: "image/jpeg" });
 
       if (uploadError) {
-        console.warn("Photo upload error:", uploadError.message);
+        if (__DEV__) console.warn("Photo upload error:", uploadError.message);
         return;
       }
 
@@ -682,7 +682,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         .single();
 
       if (insertError || !photo) {
-        console.warn("Photo insert error:", insertError?.message);
+        if (__DEV__) console.warn("Photo insert error:", insertError?.message);
         return;
       }
 
@@ -693,7 +693,7 @@ export const useEventStore = create<EventState>((set, get) => ({
         ),
       }));
     } catch (error) {
-      console.warn("Photo upload failed:", error);
+      if (__DEV__) console.warn("Photo upload failed:", error);
       showError("Foto konnte nicht hochgeladen werden.");
     }
   },

@@ -145,7 +145,7 @@ async function markCityScanned(city: string): Promise<void> {
       .update({ last_scanned: new Date().toISOString() })
       .eq("name", city);
   } catch {
-    console.warn("Failed to update last_scanned for", city);
+    if (__DEV__) console.warn("Failed to update last_scanned for", city);
   }
 }
 
@@ -161,14 +161,14 @@ export async function fetchExternalEvents(city: string): Promise<Event[]> {
   const aiEvents = aiResult.status === "fulfilled" ? aiResult.value : [];
 
   if (tmResult.status === "rejected") {
-    console.warn("Ticketmaster fetch failed:", tmResult.reason);
+    if (__DEV__) console.warn("Ticketmaster fetch failed:", tmResult.reason);
   }
   if (aiResult.status === "rejected") {
-    console.warn("AI Discovery failed:", aiResult.reason);
+    if (__DEV__) console.warn("AI Discovery failed:", aiResult.reason);
   }
 
   if (runAiScan && aiEvents.length > 0) {
-    markCityScanned(city).catch(() => {});
+    markCityScanned(city).catch((e) => { if (__DEV__) console.warn('markCityScanned failed:', e); });
   }
 
   const allEvents = [...apiEvents, ...aiEvents];

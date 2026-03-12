@@ -29,7 +29,7 @@ export default function RootLayout() {
         ]);
         setNeedsOnboarding(onboarded !== "true");
       } catch (e) {
-        console.warn("App init error:", e);
+        if (__DEV__) console.warn("App init error:", e);
       } finally {
         setIsReady(true);
         SplashScreen.hideAsync();

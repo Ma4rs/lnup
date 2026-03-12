@@ -138,7 +138,7 @@ export default function FeedScreen() {
         {/* Header */}
         <View className="px-4 pb-3 pt-4">
           <Text className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">
-            Local Nights, Unique Places
+            Lokale Nächte, einzigartige Orte
           </Text>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold text-text-primary">LNUP</Text>
@@ -241,6 +241,15 @@ export default function FeedScreen() {
                     </Text>
                   </TouchableOpacity>
                 )}
+                <TouchableOpacity
+                  onPress={() => router.push("/(tabs)/create")}
+                  className="flex-row items-center justify-center gap-2 bg-secondary/20 border border-secondary/40 rounded-xl px-5 py-3 mt-3"
+                >
+                  <Ionicons name="add-circle-outline" size={18} color={COLORS.secondary} />
+                  <Text className="text-sm font-semibold text-secondary">
+                    Eigenes Event erstellen
+                  </Text>
+                </TouchableOpacity>
               </View>
             )
           }

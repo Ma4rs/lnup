@@ -124,7 +124,7 @@ export default function LeaderboardScreen() {
           );
         }
       } catch (e) {
-        console.warn("loadLeaderboard error:", e);
+        if (__DEV__) console.warn("loadLeaderboard error:", e);
       } finally {
         setIsLoading(false);
       }

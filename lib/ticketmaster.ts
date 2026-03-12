@@ -85,7 +85,7 @@ export async function fetchTicketmasterEvents(
         );
 
         if (!response.ok) {
-          console.warn(`Ticketmaster page ${page} error: ${response.status}`);
+          if (__DEV__) console.warn(`Ticketmaster page ${page} error: ${response.status}`);
           break;
         }
 
@@ -99,7 +99,7 @@ export async function fetchTicketmasterEvents(
           await new Promise((r) => setTimeout(r, 250));
         }
       } catch {
-        console.warn(`Ticketmaster page ${page} fetch failed, stopping pagination`);
+        if (__DEV__) console.warn(`Ticketmaster page ${page} fetch failed, stopping pagination`);
         break;
       }
     }
@@ -199,7 +199,7 @@ export async function fetchTicketmasterEvents(
         };
       });
   } catch (error) {
-    console.warn("Ticketmaster fetch failed:", error);
+    if (__DEV__) console.warn("Ticketmaster fetch failed:", error);
     return [];
   }
 }

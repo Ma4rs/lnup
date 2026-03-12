@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
     try {
       await AsyncStorage.setItem("@lnup_onboarded", "true");
     } catch (e) {
-      console.warn("completeOnboarding error:", e);
+      if (__DEV__) console.warn("completeOnboarding error:", e);
     }
     router.replace("/(tabs)");
   };

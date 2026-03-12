@@ -114,7 +114,7 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
             );
           }
         } catch (persistErr) {
-          console.warn("AI event persist failed:", persistErr);
+          if (__DEV__) console.warn("AI event persist failed:", persistErr);
           useToastStore.getState().showToast(
             `${discovered.length} Events gefunden (nur lokal sichtbar).`,
             "info"
@@ -133,7 +133,7 @@ export function CityDropdown({ visible, onClose }: CityDropdownProps) {
       }
     } catch (err: any) {
       const msg = err?.message || "KI-Suche fehlgeschlagen.";
-      console.warn("AI search error:", err);
+      if (__DEV__) console.warn("AI search error:", err);
       useToastStore.getState().showToast(msg, "error");
     } finally {
       setIsDiscovering(false);
