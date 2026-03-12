@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "@/lib/constants";
 import { useEventStore } from "@/stores/eventStore";
 import { PhotoUpload } from "@/components/PhotoUpload";
 
@@ -25,7 +26,7 @@ export default function EventPhotosScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-card items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View className="flex-1">
           <Text className="text-lg font-bold text-text-primary">Fotos</Text>

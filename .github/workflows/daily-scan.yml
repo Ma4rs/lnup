@@ -2,21 +2,28 @@ name: Daily Event Scan
 
 on:
   schedule:
-    - cron: '0 0,12 * * *'
-  workflow_dispatch:
+    - cron: '0 6 * * *'  # Jeden Tag um 06:00 UTC (08:00 MEZ)
+  workflow_dispatch: {}   # Manuell auslösbar
 
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run scan
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run daily scan
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npx tsx scripts/daily-scan.ts

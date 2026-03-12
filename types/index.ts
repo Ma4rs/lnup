@@ -175,6 +175,6 @@ export interface Category {
   gradientEnd: string;
 }
 
-export type DateFilter = "heute" | "morgen" | "wochenende" | "woche" | "alle";
+export type DateFilter = "heute" | "morgen" | "wochenende" | "woche" | "naechste_woche" | "alle";
 
 export type SortOption = "date" | "popular" | "newest";

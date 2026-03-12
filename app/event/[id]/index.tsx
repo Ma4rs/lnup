@@ -18,7 +18,7 @@ import { ReportModal } from "@/components/ReportModal";
 import { InviteModal } from "@/components/InviteModal";
 import { formatEventDate, formatTime } from "@/lib/utils";
 import { getCategoryLabel, getCategoryIcon, getCategoryGradient } from "@/lib/categories";
-import { APP_URL } from "@/lib/constants";
+import { APP_URL, COLORS } from "@/lib/constants";
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,7 +77,7 @@ export default function EventDetailScreen() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-card items-center justify-center"
           >
-            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
         </View>
         {isLoading ? (
@@ -124,7 +124,7 @@ export default function EventDetailScreen() {
           className="w-10 h-10 rounded-full items-center justify-center"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View className="flex-row gap-2">
           {event.is_private && event.invite_code && (canEdit || event.is_member) && (

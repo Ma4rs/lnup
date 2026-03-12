@@ -16,6 +16,7 @@ export const DATE_FILTERS: { id: DateFilter; label: string }[] = [
   { id: "morgen", label: "Morgen" },
   { id: "wochenende", label: "Wochenende" },
   { id: "woche", label: "Diese Woche" },
+  { id: "naechste_woche", label: "Nächste Woche" },
   { id: "alle", label: "Alle" },
 ];
 

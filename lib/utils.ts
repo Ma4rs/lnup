@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow, isThisWeek, isWeekend, parseISO, differenceInDays } from "date-fns";
+import { format, isToday, isTomorrow, isThisWeek, isWeekend, parseISO, differenceInDays, addWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { de } from "date-fns/locale";
 import type { DateFilter, EventSourceType } from "@/types";
 
@@ -35,6 +35,11 @@ export function matchesDateFilter(dateStr: string, filter: DateFilter): boolean 
         return isWeekend(date) && isThisWeek(date);
       case "woche":
         return isThisWeek(date);
+      case "naechste_woche": {
+        const nextWeekStart = startOfWeek(addWeeks(new Date(), 1), { locale: de });
+        const nextWeekEnd = endOfWeek(addWeeks(new Date(), 1), { locale: de });
+        return date >= nextWeekStart && date <= nextWeekEnd;
+      }
       default:
         return true;
     }

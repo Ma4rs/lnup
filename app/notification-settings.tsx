@@ -165,7 +165,7 @@ export default function NotificationSettingsScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-card items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-text-primary">Benachrichtigungen</Text>
       </View>

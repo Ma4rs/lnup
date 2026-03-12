@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore, type ThemeMode } from "@/stores/themeStore";
 import { supabase } from "@/lib/supabase";
+import { COLORS } from "@/lib/constants";
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -195,7 +196,7 @@ export default function SettingsScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-card items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-text-primary">Einstellungen</Text>
       </View>

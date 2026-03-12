@@ -8,6 +8,7 @@ import { useEventStore } from "@/stores/eventStore";
 import { getRankForScore, getNextRank, getProgressToNextRank } from "@/lib/ranks";
 import { formatEventDate, formatTime } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/categories";
+import { COLORS } from "@/lib/constants";
 import type { Profile, RankId } from "@/types";
 
 export default function UserProfileScreen() {
@@ -92,7 +93,7 @@ export default function UserProfileScreen() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-card items-center justify-center"
           >
-            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center px-8">
@@ -115,7 +116,7 @@ export default function UserProfileScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-card items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text className="text-lg font-bold text-text-primary">@{user.username}</Text>
       </View>
